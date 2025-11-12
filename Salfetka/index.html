@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wyszukaj Przesyłkę</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- верхняя панель — только ссылка справа -->
+<div class="page">
+  <header class="topbar right">
+    <nav><a class="link-btn" href="login.html">Log In</a></nav>
+  </header>
+
+  <main class="panel">
+    <h1 class="panel-title">Wyszukaj Przesyłkę</h1>
+
+    <form id="searchForm" class="centered" autocomplete="off">
+      <label for="trackingId" class="visually-hidden">Numer przesyłki</label>
+      <input id="trackingId" class="input" type="text" placeholder="numer przesyłki..." required>
+      <button class="primary" type="submit">Szukaj</button>
+    </form>
+  </main>
+</div>
+
+<script>
+  const form = document.getElementById('searchForm');
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    const id = document.getElementById('trackingId').value.trim();
+    if(!id){ alert('Podaj numer przesyłki.'); return; }
+    alert('Szukam przesyłki: ' + id);
+  });
+</script>
+</body>
+</html>

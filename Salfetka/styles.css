@@ -1,0 +1,87 @@
+/* страница — сетка из 2 рядов: 1) верхняя панель, 2) место под контент,
+   во втором ряду панель будет по центру и по вертикали, и по горизонтали */
+.page{
+  min-height:100vh;
+  width:100%;
+  margin:0;
+  background:#ffffff;
+  padding:16px 24px;
+  position:relative;
+
+  display:grid;
+  grid-template-rows:auto 1fr; /* header сверху, остальное — центрируем */
+  row-gap:14px;
+}
+
+/* серый блок — центр по обоим осям во втором ряду */
+.panel{
+  background:#dedede;
+  border-radius:10px;
+  padding:180px 320px;
+
+  max-width:1100px; /* сколько ширины хочешь */
+  width:100%;
+  margin:0;         /* важно: без внешних отступов */
+
+  grid-row:2;             /* на всякий случай укажем второй ряд явно */
+  justify-self:center;    /* горизонтальный центр */
+  align-self:center;      /* вертикальный центр */
+}
+
+/* остальное — как было */
+.topbar{ display:flex; align-items:center; }
+.topbar.right{ justify-content:flex-end; }
+
+.link-btn, .primary{
+  display:inline-block;
+  text-decoration:none;
+  border:none;
+  outline:none;
+  background:#6f3b39;
+  color:#fff;
+  border-radius:8px;
+  padding:10px 16px;
+  font-weight:700;
+  transition:transform .06s ease, filter .15s ease;
+  cursor:pointer;
+  box-shadow:0 2px 0 #4b2a29;
+}
+.link-btn:hover, .primary:hover{ filter:brightness(1.05) }
+.link-btn:active, .primary:active{ transform:scale(.98) }
+
+.panel-title{
+  margin:4px 0 10px;
+  text-align:center;
+  font-size:22px;
+  font-weight:700;
+}
+
+.centered{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+}
+
+.input{
+  width:min(560px, 80vw);
+  background:#fff;
+  border:none;
+  border-radius:6px;
+  box-shadow:inset 0 0 0 1px #e6e6e6;
+  height:40px;
+  padding:0 14px;
+  font-size:18px;
+}
+
+.primary{ font-size:18px; padding:10px 20px; }
+
+.form-narrow{ width:380px; max-width:90%; margin:0 auto; }
+
+.visually-hidden{
+  position:absolute !important;
+  height:1px; width:1px;
+  overflow:hidden;
+  clip:rect(1px,1px,1px,1px);
+  white-space:nowrap;
+}
