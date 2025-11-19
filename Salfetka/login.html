@@ -9,7 +9,7 @@
 <body>
 <div class="page">
   <header class="topbar right">
-    <nav><a class="link-btn" href="index.html">Wyszukaj Przesyłkę</a></nav>
+    <nav style="margin-right: 50px;"><a class="link-btn" href="index.html">Wyszukaj Przesyłkę</a></nav>
   </header>
 
   <main class="panel">
@@ -22,7 +22,16 @@
       <label for="password" class="visually-hidden">Hasło</label>
       <input id="password" class="input" type="password" placeholder="Password" required>
 
+      <label for="role" class="visually-hidden">Rola</label>
+      <select id="role" class="input" required>
+        <option value="" disabled selected>Wybierz rolę</option>
+        <option value="Klient">Klient</option>
+        <option value="Pracownik">Pracownik</option>
+        <option value="Dział dostaw">Dział dostaw</option>
+      </select>
+
       <button class="primary" type="submit">zaloguj się</button>
+      <button class="primary" type="button" onclick="window.location.href='register.html'">Zarejestruj się</button>
     </form>
   </main>
 </div>
@@ -33,7 +42,23 @@
     e.preventDefault();
     const login = document.getElementById('login').value.trim();
     if(!login){ alert('Podaj login.'); return; }
-    alert('Witaj, ' + login + '! (demo logowania)');
+    const role = document.getElementById('role').value;
+    if(!role){ alert('Wybierz rolę.'); return; }
+
+    if(role === 'Klient'){
+      window.location.href = 'client.html';
+      return;
+    }
+    if(role === 'Pracownik'){
+      window.location.href = 'worker.html';
+      return;
+    }
+    if(role === 'Dział dostaw'){
+      window.location.href = 'delivery.html';
+      return;
+    }
+
+    alert('Witaj, ' + login + ' (' + role + ')! (demo logowania)');
   });
 </script>
 </body>

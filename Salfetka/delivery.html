@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pracownik działu dostaw</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page delivery-page">
+  <header class="topbar">
+    <nav><a class="link-btn" href="login.html">Wróć</a></nav>
+  </header>
+
+  <main class="delivery-panel">
+    <section class="delivery-list-card">
+      <h1>Pracownik działu dostaw</h1>
+      <div id="deliveryList" class="delivery-list"></div>
+    </section>
+
+    <section class="delivery-actions">
+      <button id="receiveBtn" class="delivery-action" type="button">Przyjęcie</button>
+      <button id="shipBtn" class="delivery-action" type="button">Wysyłka</button>
+    </section>
+  </main>
+</div>
+
+<script>
+  const deliveries = [
+    { id:'MFINBDJK87', location:'Katowice' },
+    { id:'AMSDNA1192', location:'Poznań' },
+    { id:'HDJALAMA78', location:'Gdańsk' },
+    { id:'HSKNBDJK87', location:'Wrocław' },
+    { id:'HKBYHSK227', location:'Warszawa' }
+  ];
+
+  const listContainer = document.getElementById('deliveryList');
+  const receiveBtn = document.getElementById('receiveBtn');
+  const shipBtn = document.getElementById('shipBtn');
+  let selectedId = '';
+
+  function renderDeliveries(){
+    deliveries.forEach(item => {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'delivery-row';
+      row.innerHTML = `
+        <span>${item.id}</span>
+        <strong>${item.location}</strong>
+      `;
+      row.addEventListener('click', () => selectDelivery(item.id, row));
+      listContainer.appendChild(row);
+    });
+  }
+
+  function selectDelivery(id, rowEl){
+    selectedId = id;
+    document.querySelectorAll('.delivery-row').forEach(btn => btn.classList.remove('active'));
+    rowEl.classList.add('active');
+  }
+
+  function handleAction(type){
+    if(!selectedId){
+      alert('Wybierz przesyłkę.');
+      return;
+    }
+    alert(type + ': ' + selectedId);
+  }
+
+  receiveBtn.addEventListener('click', () => handleAction('Przyjęcie'));
+  shipBtn.addEventListener('click', () => handleAction('Wysyłka'));
+
+  renderDeliveries();
+</script>
+</body>
+</html>
+

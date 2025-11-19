@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Register</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page">
+  <main class="panel">
+    <h1 class="panel-title">Strona rejestracji</h1>
+
+    <form id="registerForm" class="form-register centered" autocomplete="off">
+      <div class="form-grid">
+        <label for="firstName" class="visually-hidden">Imię</label>
+        <input id="firstName" class="input" type="text" placeholder="Imię" required>
+
+        <label for="address" class="visually-hidden">Adres</label>
+        <input id="address" class="input" type="text" placeholder="Adres" required>
+
+        <label for="lastName" class="visually-hidden">Nazwisko</label>
+        <input id="lastName" class="input" type="text" placeholder="Nazwisko" required>
+
+        <label for="phone" class="visually-hidden">Numer telefonu</label>
+        <input id="phone" class="input" type="tel" placeholder="Numer telefonu" required>
+      </div>
+    </form>
+
+    <div class="centered" style="margin-top: 40px;">
+      <button class="primary" type="submit" form="registerForm">Zarejestruj się</button>
+    </div>
+  </main>
+</div>
+
+<script>
+  const registerForm = document.getElementById('registerForm');
+  registerForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const address = document.getElementById('address').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    
+    if(!firstName || !lastName || !address || !phone){
+      alert('Wypełnij wszystkie pola.');
+      return;
+    }
+    
+    alert('Rejestracja zakończona pomyślnie! (demo)');
+    window.location.href = 'login.html';
+  });
+</script>
+</body>
+</html>
+

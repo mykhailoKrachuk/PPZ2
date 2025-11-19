@@ -3,34 +3,41 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Wyszukaj Przesyłkę</title>
+  <title>Strona rejestracji</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<!-- верхняя панель — только ссылка справа -->
 <div class="page">
-  <header class="topbar right">
-    <nav><a class="link-btn" href="login.html">Log In</a></nav>
-  </header>
-
   <main class="panel">
-    <h1 class="panel-title">Wyszukaj Przesyłkę</h1>
+    <h1 class="panel-title">Log In</h1>
 
-    <form id="searchForm" class="centered" autocomplete="off">
-      <label for="trackingId" class="visually-hidden">Numer przesyłki</label>
-      <input id="trackingId" class="input" type="text" placeholder="numer przesyłki..." required>
-      <button class="primary" type="submit">Szukaj</button>
+    <form id="loginForm" class="form-narrow centered" autocomplete="off">
+      <label for="login" class="visually-hidden">Login</label>
+      <input id="login" class="input" type="text" placeholder="Login" required>
+
+      <label for="password" class="visually-hidden">Hasło</label>
+      <input id="password" class="input" type="password" placeholder="Password" required>
+
+      <button class="primary" type="submit">Log in</button>
+      <button class="primary" type="button" onclick="window.location.href='register.html'">Zarejestruj się</button>
     </form>
   </main>
 </div>
 
 <script>
-  const form = document.getElementById('searchForm');
-  form.addEventListener('submit', function(e){
+  const loginForm = document.getElementById('loginForm');
+  loginForm.addEventListener('submit', function(e){
     e.preventDefault();
-    const id = document.getElementById('trackingId').value.trim();
-    if(!id){ alert('Podaj numer przesyłki.'); return; }
-    alert('Szukam przesyłki: ' + id);
+    const login = document.getElementById('login').value.trim();
+    const password = document.getElementById('password').value.trim();
+    
+    if(!login || !password){
+      alert('Podaj login i hasło.');
+      return;
+    }
+    
+    // Перенаправление на страницу поиска или другую логику
+    window.location.href = 'login.html';
   });
 </script>
 </body>
