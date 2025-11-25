@@ -1,3 +1,8 @@
+<?php
+require __DIR__ . '/../backend/require_auth.php';
+requireRole('user');
+?>
+
 <!doctype html>
 <html lang="pl">
 <head>
