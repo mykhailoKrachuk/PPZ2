@@ -4,12 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Log In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="page">
   <header class="topbar right">
-    <nav style="margin-right: 50px;"><a class="link-btn" href="index.html">Wyszukaj Przesyłkę</a></nav>
+    <nav>
+      <a class="link-btn" href="index.html">Wyszukaj Przesyłkę</a>
+    </nav>
   </header>
 
   <main class="panel">
@@ -30,10 +35,17 @@
         <option value="Dział dostaw">Dział dostaw</option>
       </select>
 
-      <button class="primary" type="submit">zaloguj się</button>
-      <button class="primary" type="button" onclick="window.location.href='register.html'">Zarejestruj się</button>
+      <button class="btn-primary" type="submit">Zaloguj się</button>
+      <button class="btn-secondary" type="button" onclick="window.location.href='register.html'">Zarejestruj się</button>
     </form>
   </main>
+
+  <footer class="page-footer">
+    <nav class="footer-nav">
+      <a class="link-btn" href="about.html">O nas</a>
+      <a class="link-btn" href="contact.html">Kontakt</a>
+    </nav>
+  </footer>
 </div>
 
 <script>
