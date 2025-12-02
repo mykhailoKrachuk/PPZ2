@@ -1,19 +1,18 @@
 <?php
-require __DIR__ . '/config.php';
+session_start();
 
-function requireLogin(): array {
-    if (empty($_SESSION['user'])) {
-        header('Location: /Salfetka/login.html?err=auth');
-        exit;
+function requireRole(string $role): void {
+    if (empty($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== $role) {
+        header('Location: /Salfetka/login.html?err=auth'); exit;
     }
-    return $_SESSION['user'];
 }
 
-function requireRole(string $role): array {
-    $u = requireLogin();
-    if (($u['role'] ?? '') !== $role) {
-        http_response_code(403);
-        exit('Forbidden');
+function requireAnyRole(array $roles): void {
+    if (empty($_SESSION['user']) || !in_array($_SESSION['user']['role'] ?? '', $roles, true)) {
+        header('Location: /Salfetka/login.html?err=auth'); exit;
     }
-    return $u;
+}
+
+function userRole(): ?string {
+    return $_SESSION['user']['role'] ?? null;
 }

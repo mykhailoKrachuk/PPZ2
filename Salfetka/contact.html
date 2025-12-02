@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kontakt</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page">
+  <header class="topbar right">
+    <nav style="margin-right: 50px;">
+      <a class="link-btn" href="index.html">Wyszukaj Przesyłkę</a>
+      <a class="link-btn" href="login.html">Log In</a>
+      <a class="link-btn" href="about.html">O nas</a>
+    </nav>
+  </header>
+
+  <main class="panel">
+    <h1 class="panel-title">Kontakt</h1>
+    
+    <div class="centered" style="max-width: 600px; gap: 24px;">
+      <section style="text-align: left; background: #f9f9f9; padding: 20px; border-radius: 8px; width: 100%;">
+        <h2 style="margin-bottom: 16px; font-size: 22px;">Dane kontaktowe</h2>
+        <div style="line-height: 2;">
+          <p style="margin: 8px 0;"><strong>📞 Telefon:</strong> +48 123 456 789</p>
+          <p style="margin: 8px 0;"><strong>📧 Email:</strong> kontakt@salfetka.pl</p>
+          <p style="margin: 8px 0;"><strong>📍 Adres:</strong> ul. Przykładowa 123, 00-000 Warszawa</p>
+          <p style="margin: 8px 0;"><strong>🕐 Godziny pracy:</strong> Pon-Pt: 8:00-18:00</p>
+        </div>
+      </section>
+
+      <form id="contactForm" class="form-narrow centered" style="width: 100%; max-width: 500px;">
+        <h2 style="margin-bottom: 16px; font-size: 22px;">Formularz kontaktowy</h2>
+        
+        <label for="contactName" class="visually-hidden">Imię i nazwisko</label>
+        <input id="contactName" class="input" type="text" placeholder="Imię i nazwisko" required>
+
+        <label for="contactEmail" class="visually-hidden">Email</label>
+        <input id="contactEmail" class="input" type="email" placeholder="Email" required>
+
+        <label for="contactTopic" class="visually-hidden">Temat</label>
+        <select id="contactTopic" class="input" required>
+          <option value="" disabled selected>Wybierz temat</option>
+          <option value="shipment">Pytanie o przesyłkę</option>
+          <option value="complaint">Reklamacja</option>
+          <option value="other">Inne</option>
+        </select>
+
+        <label for="contactMessage" class="visually-hidden">Wiadomość</label>
+        <textarea id="contactMessage" class="input" rows="5" placeholder="Wiadomość" required style="resize: vertical; min-height: 100px;"></textarea>
+
+        <button class="primary" type="submit">Wyślij wiadomość</button>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script>
+  const contactForm = document.getElementById('contactForm');
+  contactForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const name = document.getElementById('contactName').value.trim();
+    const email = document.getElementById('contactEmail').value.trim();
+    const topic = document.getElementById('contactTopic').value;
+    const message = document.getElementById('contactMessage').value.trim();
+    
+    if(!name || !email || !topic || !message){
+      alert('Wypełnij wszystkie wymagane pola.');
+      return;
+    }
+    
+    const topicNames = {
+      'shipment': 'Pytanie o przesyłkę',
+      'complaint': 'Reklamacja',
+      'other': 'Inne'
+    };
+    
+    alert(`Wiadomość została wysłana!\n\nTemat: ${topicNames[topic]}\nOdpowiemy na adres: ${email}\n\n(demo)`);
+    contactForm.reset();
+    document.getElementById('contactTopic').selectedIndex = 0;
+  });
+</script>
+</body>
+</html>
+

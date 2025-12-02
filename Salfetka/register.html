@@ -4,32 +4,76 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="page">
+  <header class="topbar right">
+    <nav>
+      <a class="link-btn" href="login.html">Wróć</a>
+    </nav>
+  </header>
+
   <main class="panel">
-    <h1 class="panel-title">Strona rejestracji</h1>
+    <h1 class="panel-title">Rejestracja</h1>
 
-    <form id="registerForm" class="form-register centered" autocomplete="off">
-      <div class="form-grid">
-        <label for="firstName" class="visually-hidden">Imię</label>
-        <input id="firstName" class="input" type="text" placeholder="Imię" required>
+    <form id="registerForm"
+          class="form-register-grid centered"
+          autocomplete="off"
+          method="post"
+          action="/backend/register.php">
 
-        <label for="address" class="visually-hidden">Adres</label>
-        <input id="address" class="input" type="text" placeholder="Adres" required>
+      <label for="username" class="visually-hidden">Login</label>
+      <input id="username" class="input" type="text" name="username" placeholder="Nazwa użytkownika" required>
 
-        <label for="lastName" class="visually-hidden">Nazwisko</label>
-        <input id="lastName" class="input" type="text" placeholder="Nazwisko" required>
+      <label for="password" class="visually-hidden">Hasło</label>
+      <input id="password" class="input" type="password" name="password" placeholder="Hasło" required>
 
-        <label for="phone" class="visually-hidden">Numer telefonu</label>
-        <input id="phone" class="input" type="tel" placeholder="Numer telefonu" required>
+      <label for="mail" class="visually-hidden">E-mail</label>
+      <input id="mail" class="input" type="email" name="mail" placeholder="E-mail" required>
+
+      <label for="phone_number" class="visually-hidden">Telefon</label>
+      <input id="phone_number" class="input" type="tel" name="phone_number" placeholder="Numer telefonu" required>
+
+      <label for="name" class="visually-hidden">Imię</label>
+      <input id="name" class="input" type="text" name="name" placeholder="Imię" required>
+
+      <label for="surname" class="visually-hidden">Nazwisko</label>
+      <input id="surname" class="input" type="text" name="surname" placeholder="Nazwisko" required>
+
+      <label for="address" class="visually-hidden">Adres</label>
+      <input id="address" class="input" type="text" name="address" placeholder="Adres" required>
+
+      <label for="country" class="visually-hidden">Kraj</label>
+      <input id="country" class="input" type="text" name="country" placeholder="Kraj" required>
+
+      <label for="city" class="visually-hidden">Miasto</label>
+      <input id="city" class="input" type="text" name="city" placeholder="Miasto" required>
+
+      <label for="postal_code" class="visually-hidden">Kod pocztowy</label>
+      <input id="postal_code" class="input" type="text" name="postal_code" placeholder="Kod pocztowy" required>
+
+      <button class="btn-primary" type="submit">Zarejestruj się</button>
+      <button class="btn-secondary" type="button" onclick="window.location.href='login.html'">Mam już konto</button>
+
+      <div class="error" style="grid-column:1/-1; text-align:center; color:#e44;">
+        <script>
+          const err = new URLSearchParams(location.search).get('err');
+          const ok  = new URLSearchParams(location.search).get('ok');
+          const map = {
+            empty  : 'Wypełnij wszystkie pola.',
+            exists : 'Taki użytkownik lub e-mail już istnieje.',
+            server : 'Błąd serwera. Spróbuj ponownie.',
+            ok     : 'Konto utworzone! Możesz się zalogować.'
+          };
+          if (ok) document.write('<p>'+map.ok+'</p>');
+          else if (map[err]) document.write('<p>'+map[err]+'</p>');
+        </script>
       </div>
     </form>
-
-    <div class="centered" style="margin-top: 40px;">
-      <button class="primary" type="submit" form="registerForm">Zarejestruj się</button>
-    </div>
   </main>
 </div>
 
@@ -37,12 +81,18 @@
   const registerForm = document.getElementById('registerForm');
   registerForm.addEventListener('submit', function(e){
     e.preventDefault();
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const mail = document.getElementById('mail').value.trim();
+    const phone_number = document.getElementById('phone_number').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const surname = document.getElementById('surname').value.trim();
     const address = document.getElementById('address').value.trim();
-    const phone = document.getElementById('phone').value.trim();
+    const country = document.getElementById('country').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const postal_code = document.getElementById('postal_code').value.trim();
     
-    if(!firstName || !lastName || !address || !phone){
+    if(!username || !password || !mail || !phone_number || !name || !surname || !address || !country || !city || !postal_code){
       alert('Wypełnij wszystkie pola.');
       return;
     }
@@ -53,4 +103,3 @@
 </script>
 </body>
 </html>
-

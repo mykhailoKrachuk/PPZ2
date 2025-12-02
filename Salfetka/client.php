@@ -1,6 +1,8 @@
 <?php
 require __DIR__ . '/../backend/require_auth.php';
-requireRole('user');
+requireRole('user'); // впускаем только клиентов
+
+$user = $_SESSION['user'];
 ?>
 
 <!doctype html>
@@ -9,12 +11,15 @@ requireRole('user');
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Strona klienta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="page client-page">
   <header class="topbar">
-    <nav><a class="link-btn" href="login.html">Wróć</a></nav>
+    <nav><a class="link-btn" href="login.html">Wyłoguj się</a></nav>
   </header>
 
   <main class="client-panel">
