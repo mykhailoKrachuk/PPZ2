@@ -76,30 +76,5 @@
     </form>
   </main>
 </div>
-
-<script>
-  const registerForm = document.getElementById('registerForm');
-  registerForm.addEventListener('submit', function(e){
-    e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const mail = document.getElementById('mail').value.trim();
-    const phone_number = document.getElementById('phone_number').value.trim();
-    const name = document.getElementById('name').value.trim();
-    const surname = document.getElementById('surname').value.trim();
-    const address = document.getElementById('address').value.trim();
-    const country = document.getElementById('country').value.trim();
-    const city = document.getElementById('city').value.trim();
-    const postal_code = document.getElementById('postal_code').value.trim();
-    
-    if(!username || !password || !mail || !phone_number || !name || !surname || !address || !country || !city || !postal_code){
-      alert('Wypełnij wszystkie pola.');
-      return;
-    }
-    
-    alert('Rejestracja zakończona pomyślnie! (demo)');
-    window.location.href = 'login.html';
-  });
-</script>
 </body>
 </html>
