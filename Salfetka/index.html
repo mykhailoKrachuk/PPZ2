@@ -8,8 +8,12 @@
 </head>
 <body>
 <div class="page">
-  <header class="topbar right">
-    <nav>
+  <header class="topbar">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">📦</div>
+      <span>Salfetka</span>
+    </a>
+    <nav class="topbar-nav">
       <a class="link-btn" href="login.html">Log In</a>
     </nav>
   </header>
@@ -18,10 +22,21 @@
     <h1 class="panel-title">Wyszukaj Przesyłkę</h1>
     
     <form id="searchForm" class="form-narrow centered" autocomplete="off">
-      <label for="trackingNumber" class="visually-hidden">Numer przesyłki</label>
-      <input id="trackingNumber" class="input" type="text" placeholder="Wpisz numer przesyłki" required>
+      <div class="form-group">
+        <label for="trackingNumber">Numer przesyłki</label>
+        <div class="input-wrapper">
+          <div class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+          </div>
+          <input id="trackingNumber" class="input has-icon" type="text" placeholder="Wpisz numer przesyłki" required>
+          <div class="error-message" id="trackingError"></div>
+        </div>
+      </div>
       
-      <button class="primary" type="submit" style="margin: 0 auto; display: block;">Szukaj</button>
+      <button class="btn-primary" type="submit" style="margin: 0 auto; display: block;">Szukaj</button>
     </form>
 
     <div id="searchResult" style="max-width: 600px; margin: 24px auto; display: none;">
@@ -122,37 +137,50 @@
 
   searchForm.addEventListener('submit', function(e){
     e.preventDefault();
-    const trackingNumber = document.getElementById('trackingNumber').value.trim().toUpperCase();
+    const trackingInput = document.getElementById('trackingNumber');
+    const trackingError = document.getElementById('trackingError');
+    const trackingNumber = trackingInput.value.trim().toUpperCase();
+    
+    // Валидация
+    trackingInput.classList.remove('error');
+    trackingError.classList.remove('show');
+    trackingError.textContent = '';
     
     if(!trackingNumber){
-      alert('Wpisz numer przesyłki.');
+      trackingInput.classList.add('error');
+      trackingError.textContent = 'Wpisz numer przesyłki.';
+      trackingError.classList.add('show');
       return;
     }
 
     const shipment = sampleShipments.find(s => s.id === trackingNumber);
     
     if(shipment){
-      const statusColors = {
-        'Utworzona': '#2196F3',
-        'Przyjęta': '#FF9800',
-        'Gotowa do wysyłki': '#9C27B0',
-        'Wysłana': '#00BCD4',
-        'W drodze': '#3F51B5',
-        'Magazyn': '#795548',
-        'Dostarczona': '#4CAF50'
-      };
-      const statusColor = statusColors[shipment.status] || '#666';
+      // Функция для получения класса бейджа статуса
+      function getStatusBadgeClass(status) {
+        const statusMap = {
+          'Utworzona': 'utworzona',
+          'W drodze': 'w-drodze',
+          'Dostarczona': 'dostarczona',
+          'Wydana klientowi': 'wydana-klientowi',
+          'Przyjęta': 'przyjeta',
+          'Magazyn': 'magazyn',
+          'Gotowa do wysyłki': 'gotowa-do-wysylki',
+          'Wysłana': 'wyslana'
+        };
+        return statusMap[status] || 'utworzona';
+      }
       
       let historyHtml = '<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;"><strong>Historia przesyłki:</strong><ul style="margin-top: 12px; padding-left: 20px;">';
       shipment.history.forEach(h => {
-        historyHtml += `<li style="margin-bottom: 8px; line-height: 1.6;"><strong>${h.date}</strong> - ${h.status} (${h.location})</li>`;
+        historyHtml += `<li style="margin-bottom: 8px; line-height: 1.6;"><strong>${h.date}</strong> - <span class="status-badge ${getStatusBadgeClass(h.status)}">${h.status}</span> (${h.location})</li>`;
       });
       historyHtml += '</ul></div>';
       
       resultContent.innerHTML = `
-        <h3 style="margin-top: 0; margin-bottom: 16px;">Numer przesyłki: <strong style="font-size: 20px;">${shipment.id}</strong></h3>
-        <div style="background: ${statusColor}; color: white; padding: 12px; border-radius: 6px; margin-bottom: 16px; text-align: center;">
-          <strong style="font-size: 18px;">Status: ${shipment.status}</strong>
+        <h3 style="margin-top: 0; margin-bottom: 16px; text-align: left;">Numer przesyłki: <strong style="font-size: 20px;">${shipment.id}</strong></h3>
+        <div style="margin-bottom: 16px; text-align: left;">
+          <span class="status-badge ${getStatusBadgeClass(shipment.status)}">${shipment.status}</span>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
           <p><strong>Data wysłania:</strong><br>${shipment.date.split('-').reverse().join('-')}</p>

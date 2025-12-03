@@ -11,8 +11,13 @@
 </head>
 <body>
 <div class="page">
-  <header class="topbar right">
-    <nav>
+  <header class="topbar">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">📦</div>
+      <span>Salfetka</span>
+    </a>
+    <nav class="topbar-nav">
+      <a class="link-btn" href="index.html">Wyszukaj przesyłkę</a>
       <a class="link-btn" href="login.html">Wróć</a>
     </nav>
   </header>
@@ -21,35 +26,87 @@
     <h1 class="panel-title">Rejestracja</h1>
 
     <form id="registerForm" class="form-register-grid centered" autocomplete="off">
-      <label for="username" class="visually-hidden">Nazwa użytkownika</label>
-      <input id="username" class="input" type="text" placeholder="Nazwa użytkownika" required>
+      <div class="form-group">
+        <label for="username" class="required">Nazwa użytkownika</label>
+        <div class="input-wrapper">
+          <div class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <input id="username" class="input has-icon" type="text" placeholder="Wpisz nazwę użytkownika" required>
+          <div class="error-message" id="usernameError"></div>
+        </div>
+      </div>
 
-      <label for="password" class="visually-hidden">Hasło</label>
-      <input id="password" class="input" type="password" placeholder="Hasło" required>
+      <div class="form-group">
+        <label for="password" class="required">Hasło</label>
+        <div class="input-wrapper">
+          <div class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <input id="password" class="input has-icon" type="password" placeholder="Wpisz hasło" required>
+          <button type="button" class="password-toggle" id="passwordToggle" aria-label="Pokaż hasło">
+            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+          <div class="error-message" id="passwordError"></div>
+        </div>
+      </div>
 
-      <label for="mail" class="visually-hidden">Email</label>
-      <input id="mail" class="input" type="email" placeholder="Email" required>
+      <div class="form-group">
+        <label for="mail" class="required">Email</label>
+        <input id="mail" class="input" type="email" placeholder="Wpisz email" required>
+        <div class="error-message" id="mailError"></div>
+      </div>
 
-      <label for="phone_number" class="visually-hidden">Numer telefonu</label>
-      <input id="phone_number" class="input" type="tel" placeholder="Numer telefonu" required>
+      <div class="form-group">
+        <label for="phone_number" class="required">Numer telefonu</label>
+        <input id="phone_number" class="input" type="tel" placeholder="Wpisz numer telefonu" required>
+        <div class="error-message" id="phoneError"></div>
+      </div>
 
-      <label for="name" class="visually-hidden">Imię</label>
-      <input id="name" class="input" type="text" placeholder="Imię" required>
+      <div class="form-group">
+        <label for="name" class="required">Imię</label>
+        <input id="name" class="input" type="text" placeholder="Wpisz imię" required>
+        <div class="error-message" id="nameError"></div>
+      </div>
 
-      <label for="surname" class="visually-hidden">Nazwisko</label>
-      <input id="surname" class="input" type="text" placeholder="Nazwisko" required>
+      <div class="form-group">
+        <label for="surname" class="required">Nazwisko</label>
+        <input id="surname" class="input" type="text" placeholder="Wpisz nazwisko" required>
+        <div class="error-message" id="surnameError"></div>
+      </div>
 
-      <label for="address" class="visually-hidden">Adres</label>
-      <input id="address" class="input" type="text" placeholder="Adres" required>
+      <div class="form-group">
+        <label for="address" class="required">Adres</label>
+        <input id="address" class="input" type="text" placeholder="Wpisz adres" required>
+        <div class="error-message" id="addressError"></div>
+      </div>
 
-      <label for="country" class="visually-hidden">Kraj</label>
-      <input id="country" class="input" type="text" placeholder="Kraj" required>
+      <div class="form-group">
+        <label for="country" class="required">Kraj</label>
+        <input id="country" class="input" type="text" placeholder="Wpisz kraj" required>
+        <div class="error-message" id="countryError"></div>
+      </div>
 
-      <label for="city" class="visually-hidden">Miasto</label>
-      <input id="city" class="input" type="text" placeholder="Miasto" required>
+      <div class="form-group">
+        <label for="city" class="required">Miasto</label>
+        <input id="city" class="input" type="text" placeholder="Wpisz miasto" required>
+        <div class="error-message" id="cityError"></div>
+      </div>
 
-      <label for="postal_code" class="visually-hidden">Kod pocztowy</label>
-      <input id="postal_code" class="input" type="text" placeholder="Kod pocztowy" required>
+      <div class="form-group">
+        <label for="postal_code" class="required">Kod pocztowy</label>
+        <input id="postal_code" class="input" type="text" placeholder="Wpisz kod pocztowy" required>
+        <div class="error-message" id="postalError"></div>
+      </div>
 
       <button class="btn-primary" type="submit" style="grid-column: 1 / -1;">Zarejestruj się</button>
       <button class="btn-secondary" type="button" onclick="window.location.href='login.html'" style="grid-column: 1 / -1;">Masz już konto? Zaloguj się</button>
@@ -59,23 +116,54 @@
 
 <script>
   const registerForm = document.getElementById('registerForm');
+  const passwordToggle = document.getElementById('passwordToggle');
+  const passwordInput = document.getElementById('password');
+  const eyeIcon = document.getElementById('eyeIcon');
+
+  // Переключатель видимости пароля
+  passwordToggle.addEventListener('click', function() {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    if (type === 'text') {
+      eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+    } else {
+      eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    }
+  });
+
   registerForm.addEventListener('submit', function(e){
     e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const mail = document.getElementById('mail').value.trim();
-    const phone_number = document.getElementById('phone_number').value.trim();
-    const name = document.getElementById('name').value.trim();
-    const surname = document.getElementById('surname').value.trim();
-    const address = document.getElementById('address').value.trim();
-    const country = document.getElementById('country').value.trim();
-    const city = document.getElementById('city').value.trim();
-    const postal_code = document.getElementById('postal_code').value.trim();
+    const fields = [
+      { id: 'username', errorId: 'usernameError' },
+      { id: 'password', errorId: 'passwordError' },
+      { id: 'mail', errorId: 'mailError' },
+      { id: 'phone_number', errorId: 'phoneError' },
+      { id: 'name', errorId: 'nameError' },
+      { id: 'surname', errorId: 'surnameError' },
+      { id: 'address', errorId: 'addressError' },
+      { id: 'country', errorId: 'countryError' },
+      { id: 'city', errorId: 'cityError' },
+      { id: 'postal_code', errorId: 'postalError' }
+    ];
     
-    if(!username || !password || !mail || !phone_number || !name || !surname || !address || !country || !city || !postal_code){
-      alert('Wypełnij wszystkie pola.');
-      return;
-    }
+    let hasError = false;
+    fields.forEach(field => {
+      const input = document.getElementById(field.id);
+      const error = document.getElementById(field.errorId);
+      const value = input.value.trim();
+      
+      input.classList.remove('error');
+      error.classList.remove('show');
+      
+      if(!value){
+        input.classList.add('error');
+        error.textContent = `Wypełnij pole ${field.id === 'mail' ? 'email' : field.id === 'phone_number' ? 'numer telefonu' : field.id}.`;
+        error.classList.add('show');
+        hasError = true;
+      }
+    });
+    
+    if(hasError) return;
     
     alert('Rejestracja zakończona pomyślnie! (demo)');
     window.location.href = 'login.html';

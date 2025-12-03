@@ -12,12 +12,19 @@
 <body>
 <div class="page delivery-page">
   <header class="topbar">
-    <nav><a class="link-btn" href="login.html">Wyłoguj się</a></nav>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">📦</div>
+      <span>Salfetka</span>
+    </a>
+    <nav class="topbar-nav">
+      <a class="link-btn" href="index.html">Wyszukaj przesyłkę</a>
+      <a class="link-btn" href="login.html">Wyłoguj się</a>
+    </nav>
   </header>
 
   <main class="delivery-panel">
     <section class="delivery-list-card">
-      <h1>Pracownik działu dostaw</h1>
+      <h1 class="section-title">Pracownik działu dostaw</h1>
       <div id="deliveryList" class="delivery-list"></div>
     </section>
 
@@ -43,6 +50,17 @@
   let selectedId = '';
 
   function renderDeliveries(){
+    listContainer.innerHTML = '';
+    if(!deliveries.length){
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = `
+        <div class="empty-icon">📦</div>
+        <div class="empty-text">Brak przesyłek do wyświetlenia</div>
+      `;
+      listContainer.appendChild(empty);
+      return;
+    }
     deliveries.forEach(item => {
       const row = document.createElement('button');
       row.type = 'button';

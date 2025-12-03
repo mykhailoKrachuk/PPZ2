@@ -12,30 +12,43 @@
 <body>
 <div class="page client-page">
   <header class="topbar">
-    <nav><a class="link-btn" href="login.html">Wyłoguj się</a></nav>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">📦</div>
+      <span>Salfetka</span>
+    </a>
+    <nav class="topbar-nav">
+      <a class="link-btn" href="index.html">Wyszukaj przesyłkę</a>
+      <a class="link-btn" href="login.html">Wyłoguj się</a>
+    </nav>
   </header>
 
   <main class="client-panel">
     <aside class="filter-card">
-      <h2>Filtruj</h2>
-      <label for="filterId" class="visually-hidden">Numer przesyłki</label>
-      <input id="filterId" class="input slim" type="text" placeholder="numer przesyłki">
+      <h2 class="section-title">Filtruj</h2>
+      <div class="form-group">
+        <label for="filterId">Numer przesyłki</label>
+        <input id="filterId" class="input slim" type="text" placeholder="Wpisz numer przesyłki">
+      </div>
 
-      <label for="filterDate" class="visually-hidden">Data nadania</label>
-      <input id="filterDate" class="input slim" type="date">
+      <div class="form-group">
+        <label for="filterDate">Data nadania</label>
+        <input id="filterDate" class="input slim" type="date">
+      </div>
 
-      <label for="filterStatus" class="visually-hidden">Status</label>
-      <select id="filterStatus" class="input slim">
-        <option value="">status</option>
-        <option>Utworzona</option>
-        <option>W drodze</option>
-        <option>Dostarczona</option>
-        <option>Wydana klientowi</option>
-      </select>
+      <div class="form-group">
+        <label for="filterStatus">Status</label>
+        <select id="filterStatus" class="input slim">
+          <option value="">Wszystkie statusy</option>
+          <option>Utworzona</option>
+          <option>W drodze</option>
+          <option>Dostarczona</option>
+          <option>Wydana klientowi</option>
+        </select>
+      </div>
     </aside>
 
     <section class="shipments-card">
-      <h2>Lista przesyłek</h2>
+      <h2 class="section-title">Lista przesyłek</h2>
       <div id="shipmentList" class="shipments-list"></div>
     </section>
 
@@ -46,18 +59,64 @@
         <p class="details-code" id="detailsCode">Wybierz przesyłkę</p>
         <p id="detailsStatus"></p>
         <p id="detailsDate"></p>
+        <div id="detailsRoute" class="route-timeline"></div>
       </div>
     </div>
   </main>
 </div>
 
 <script>
+  // Prosta \"baza danych\" przesyłek z przykładowymi trasami
   const shipments = [
-    { id:'NPX66UW2GP', status:'Utworzona', date:'2025-10-24' },
-    { id:'WX90PL0AA1', status:'W drodze', date:'2025-10-20' },
-    { id:'JL55MK7CD2', status:'Dostarczona', date:'2025-09-18' },
-    { id:'BT73RT1XZ3', status:'Wydana klientowi', date:'2025-08-04' },
-    { id:'QP19ZD8LK4', status:'W drodze', date:'2025-10-18' }
+    { 
+      id:'NPX66UW2GP', 
+      status:'Utworzona', 
+      date:'2025-10-24',
+      route: [
+        { status: 'Utworzona', label: 'Utworzona', date: '22-10-2025 10:12', location: 'Warszawa – nadanie paczki' }
+      ]
+    },
+    { 
+      id:'WX90PL0AA1', 
+      status:'W drodze', 
+      date:'2025-10-20',
+      route: [
+        { status: 'Utworzona', label: 'Utworzona', date: '18-10-2025 09:05', location: 'Kraków – rejestracja przesyłki' },
+        { status: 'Wysłana', label: 'Wysłana z magazynu', date: '19-10-2025 14:30', location: 'Magazyn centralny' },
+        { status: 'W drodze', label: 'W drodze', date: '20-10-2025 06:45', location: 'Trasa do paczkomatu' }
+      ]
+    },
+    { 
+      id:'JL55MK7CD2', 
+      status:'Dostarczona', 
+      date:'2025-09-18',
+      route: [
+        { status: 'Utworzona', label: 'Utworzona', date: '15-09-2025 11:20', location: 'Poznań – utworzenie etykiety' },
+        { status: 'W drodze', label: 'W drodze', date: '16-09-2025 08:10', location: 'Centrum sortowania' },
+        { status: 'Dostarczona', label: 'Dostarczona do paczkomatu', date: '18-09-2025 17:30', location: 'Paczkamat JL-02' }
+      ]
+    },
+    { 
+      id:'BT73RT1XZ3', 
+      status:'Wydana klientowi', 
+      date:'2025-08-04',
+      route: [
+        { status: 'Utworzona', label: 'Utworzona', date: '01-08-2025 10:00', location: 'Warszawa – sklep internetowy' },
+        { status: 'W drodze', label: 'W drodze', date: '02-08-2025 13:40', location: 'Kurier w trasie' },
+        { status: 'Dostarczona', label: 'Dostarczona do punktu', date: '03-08-2025 09:15', location: 'Punkt odbioru BT-17' },
+        { status: 'Wydana klientowi', label: 'Wydana klientowi', date: '04-08-2025 18:02', location: 'Punkt odbioru BT-17' }
+      ]
+    },
+    { 
+      id:'QP19ZD8LK4', 
+      status:'W drodze', 
+      date:'2025-10-18',
+      route: [
+        { status: 'Utworzona', label: 'Utworzona', date: '16-10-2025 12:48', location: 'Łódź – nadanie' },
+        { status: 'Magazyn', label: 'W magazynie', date: '17-10-2025 07:30', location: 'Magazyn regionalny' },
+        { status: 'W drodze', label: 'W drodze do klienta', date: '18-10-2025 08:20', location: 'Trasa do paczkomatu' }
+      ]
+    }
   ];
 
   const listEl = document.getElementById('shipmentList');
@@ -66,6 +125,7 @@
   const detailCode = document.getElementById('detailsCode');
   const detailStatus = document.getElementById('detailsStatus');
   const detailDate = document.getElementById('detailsDate');
+  const detailRoute = document.getElementById('detailsRoute');
 
   const filterId = document.getElementById('filterId');
   const filterDate = document.getElementById('filterDate');
@@ -87,13 +147,26 @@
     });
   }
 
+  function getStatusBadgeClass(status) {
+    const statusMap = {
+      'Utworzona': 'utworzona',
+      'W drodze': 'w-drodze',
+      'Dostarczona': 'dostarczona',
+      'Wydana klientowi': 'wydana-klientowi'
+    };
+    return statusMap[status] || 'utworzona';
+  }
+
   function renderList(){
     const filtered = applyFilters();
     listEl.innerHTML = '';
     if(!filtered.length){
-      const empty = document.createElement('p');
+      const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = 'Brak przesyłek.';
+      empty.innerHTML = `
+        <div class="empty-icon">📦</div>
+        <div class="empty-text">Brak przesyłek do wyświetlenia</div>
+      `;
       listEl.appendChild(empty);
       return;
     }
@@ -104,18 +177,52 @@
       btn.type = 'button';
       btn.innerHTML = `
         <strong>${item.id}</strong>
-        <span>${item.status}</span>
-        <span>${item.date}</span>
+        <span class="status-badge ${getStatusBadgeClass(item.status)}">${item.status}</span>
+        <span>${item.date.split('-').reverse().join('-')}</span>
       `;
       btn.addEventListener('click', () => showDetails(item));
       listEl.appendChild(btn);
     });
   }
 
+  function renderRoute(item){
+    if(!item.route || !item.route.length){
+      detailRoute.innerHTML = '';
+      return;
+    }
+
+    const stepsHtml = item.route.map((step, index) => {
+      const isLast = index === item.route.length - 1;
+      const badgeClass = getStatusBadgeClass(step.status);
+      return `
+        <div class="route-step ${isLast ? 'route-step--current' : ''}">
+          <div class="route-step-marker">
+            <span class="route-step-dot"></span>
+            ${!isLast ? '<span class="route-step-line"></span>' : ''}
+          </div>
+          <div class="route-step-content">
+            <div class="route-step-title">${step.label}</div>
+            <div class="route-step-meta">${step.date}</div>
+            <div class="route-step-meta">${step.location}</div>
+            <div class="route-step-status">
+              <span class="status-badge ${badgeClass}">${step.status}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    detailRoute.innerHTML = `
+      <h4 class="route-title">Trasa przesyłki</h4>
+      ${stepsHtml}
+    `;
+  }
+
   function showDetails(item){
     detailCode.textContent = item.id;
-    detailStatus.textContent = 'Status: ' + item.status;
+    detailStatus.innerHTML = 'Status: <span class="status-badge ' + getStatusBadgeClass(item.status) + '">' + item.status + '</span>';
     detailDate.textContent = 'Data wysłania: ' + item.date.split('-').reverse().join('-');
+    renderRoute(item);
     detailsOverlay.classList.remove('hidden');
     detailsOverlay.setAttribute('aria-hidden', 'false');
   }

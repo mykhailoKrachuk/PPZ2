@@ -11,9 +11,13 @@
 </head>
 <body>
 <div class="page">
-  <header class="topbar right">
-    <nav>
-      <a class="link-btn" href="index.html">Wyszukaj Przesyłkę</a>
+  <header class="topbar">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">📦</div>
+      <span>Salfetka</span>
+    </a>
+    <nav class="topbar-nav">
+      <a class="link-btn" href="index.html">Wyszukaj przesyłkę</a>
     </nav>
   </header>
 
@@ -21,19 +25,50 @@
     <h1 class="panel-title">Log In</h1>
 
     <form id="loginForm" class="form-narrow centered" autocomplete="off">
-      <label for="login" class="visually-hidden">Login</label>
-      <input id="login" class="input" type="text" placeholder="Login" required>
+      <div class="form-group">
+        <label for="login" class="required">Login</label>
+        <div class="input-wrapper">
+          <div class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <input id="login" class="input has-icon" type="text" placeholder="Wpisz login" required>
+          <div class="error-message" id="loginError"></div>
+        </div>
+      </div>
 
-      <label for="password" class="visually-hidden">Hasło</label>
-      <input id="password" class="input" type="password" placeholder="Password" required>
+      <div class="form-group">
+        <label for="password" class="required">Hasło</label>
+        <div class="input-wrapper">
+          <div class="input-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <input id="password" class="input has-icon" type="password" placeholder="Wpisz hasło" required>
+          <button type="button" class="password-toggle" id="passwordToggle" aria-label="Pokaż hasło">
+            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+          <div class="error-message" id="passwordError"></div>
+        </div>
+      </div>
 
-      <label for="role" class="visually-hidden">Rola</label>
-      <select id="role" class="input" required>
-        <option value="" disabled selected>Wybierz rolę</option>
-        <option value="Klient">Klient</option>
-        <option value="Pracownik">Pracownik</option>
-        <option value="Dział dostaw">Dział dostaw</option>
-      </select>
+      <div class="form-group">
+        <label for="role" class="required">Rola</label>
+        <select id="role" class="input" required>
+          <option value="" disabled selected>Wybierz rolę</option>
+          <option value="Klient">Klient</option>
+          <option value="Pracownik">Pracownik</option>
+          <option value="Dział dostaw">Dział dostaw</option>
+        </select>
+        <div class="error-message" id="roleError"></div>
+      </div>
 
       <button class="btn-primary" type="submit">Zaloguj się</button>
       <button class="btn-secondary" type="button" onclick="window.location.href='register.html'">Zarejestruj się</button>
@@ -50,12 +85,64 @@
 
 <script>
   const loginForm = document.getElementById('loginForm');
+  const passwordToggle = document.getElementById('passwordToggle');
+  const passwordInput = document.getElementById('password');
+  const eyeIcon = document.getElementById('eyeIcon');
+
+  // Переключатель видимости пароля
+  passwordToggle.addEventListener('click', function() {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    if (type === 'text') {
+      eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+    } else {
+      eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    }
+  });
+
   loginForm.addEventListener('submit', function(e){
     e.preventDefault();
-    const login = document.getElementById('login').value.trim();
-    if(!login){ alert('Podaj login.'); return; }
-    const role = document.getElementById('role').value;
-    if(!role){ alert('Wybierz rolę.'); return; }
+    const loginInput = document.getElementById('login');
+    const passwordInput = document.getElementById('password');
+    const roleInput = document.getElementById('role');
+    const loginError = document.getElementById('loginError');
+    const passwordError = document.getElementById('passwordError');
+    const roleError = document.getElementById('roleError');
+    
+    // Сброс ошибок
+    loginInput.classList.remove('error');
+    passwordInput.classList.remove('error');
+    roleInput.classList.remove('error');
+    loginError.classList.remove('show');
+    passwordError.classList.remove('show');
+    roleError.classList.remove('show');
+    
+    let hasError = false;
+    const login = loginInput.value.trim();
+    if(!login){ 
+      loginInput.classList.add('error');
+      loginError.textContent = 'Podaj login.';
+      loginError.classList.add('show');
+      hasError = true;
+    }
+    
+    const password = passwordInput.value.trim();
+    if(!password){ 
+      passwordInput.classList.add('error');
+      passwordError.textContent = 'Podaj hasło.';
+      passwordError.classList.add('show');
+      hasError = true;
+    }
+    
+    const role = roleInput.value;
+    if(!role){ 
+      roleInput.classList.add('error');
+      roleError.textContent = 'Wybierz rolę.';
+      roleError.classList.add('show');
+      hasError = true;
+    }
+    
+    if(hasError) return;
 
     if(role === 'Klient'){
       window.location.href = 'client.html';

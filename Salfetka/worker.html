@@ -12,36 +12,52 @@
 <body>
 <div class="page worker-page">
   <header class="topbar">
-    <nav><a class="link-btn" href="login.html">Wyłoguj się</a></nav>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">📦</div>
+      <span>Salfetka</span>
+    </a>
+    <nav class="topbar-nav">
+      <a class="link-btn" href="index.html">Wyszukaj przesyłkę</a>
+      <a class="link-btn" href="login.html">Wyłoguj się</a>
+    </nav>
   </header>
 
   <main class="worker-panel">
     <section class="worker-search">
-      <h1>Strona Pracownika</h1>
-      <label for="searchNumber" class="visually-hidden">Numer przesyłki</label>
-      <input id="searchNumber" class="worker-input" type="text" placeholder="wpisz numer">
+      <h1 class="section-title">Strona Pracownika</h1>
+      <div class="form-group">
+        <label for="searchNumber">Numer przesyłki</label>
+        <input id="searchNumber" class="worker-input" type="text" placeholder="Wpisz numer">
+      </div>
 
-      <label for="searchFirst" class="visually-hidden">Imię</label>
-      <input id="searchFirst" class="worker-input" type="text" placeholder="Imię">
+      <div class="form-group">
+        <label for="searchFirst">Imię</label>
+        <input id="searchFirst" class="worker-input" type="text" placeholder="Wpisz imię">
+      </div>
 
-      <label for="searchLast" class="visually-hidden">Nazwisko</label>
-      <input id="searchLast" class="worker-input" type="text" placeholder="Nazwisko">
+      <div class="form-group">
+        <label for="searchLast">Nazwisko</label>
+        <input id="searchLast" class="worker-input" type="text" placeholder="Wpisz nazwisko">
+      </div>
 
       <button id="createBtn" class="worker-btn full" type="button">Utwórz</button>
     </section>
 
     <section class="worker-results">
+      <h2 class="section-title">Lista przesyłek</h2>
       <div class="worker-controls">
-        <label for="destinationSelect">Do:</label>
-        <select id="destinationSelect" class="worker-input select">
-          <option value="">Wszystkie miasta</option>
-          <option value="Katowice">Katowice</option>
-          <option value="Poznań">Poznań</option>
-          <option value="Gdańsk">Gdańsk</option>
-          <option value="Wrocław">Wrocław</option>
-          <option value="Warszawa">Warszawa</option>
-        </select>
-        <button id="detailsBtn" class="worker-btn" type="button">Wyświetl</button>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="destinationSelect">Miasto docelowe</label>
+          <select id="destinationSelect" class="worker-input select">
+            <option value="">Wszystkie miasta</option>
+            <option value="Katowice">Katowice</option>
+            <option value="Poznań">Poznań</option>
+            <option value="Gdańsk">Gdańsk</option>
+            <option value="Wrocław">Wrocław</option>
+            <option value="Warszawa">Warszawa</option>
+          </select>
+        </div>
+        <button id="detailsBtn" class="worker-btn" type="button" style="align-self: flex-end;">Wyświetl</button>
       </div>
 
       <div id="workerList" class="worker-list"></div>
@@ -54,17 +70,25 @@
     <button class="close-btn" type="button" data-close="createOverlay" aria-label="Zamknij okno">&times;</button>
     <h2 id="createHeading">Tworzenie Przesyłki</h2>
     <form id="createForm" class="modal-form">
-      <label for="receiverName">Imię i nazwisko odbiorcy</label>
-      <input id="receiverName" type="text" required>
+      <div class="form-group">
+        <label for="receiverName" class="required">Imię i nazwisko odbiorcy</label>
+        <input id="receiverName" type="text" required>
+      </div>
 
-      <label for="receiverAddress">Adres Dostawy</label>
-      <input id="receiverAddress" type="text" required>
+      <div class="form-group">
+        <label for="receiverAddress" class="required">Adres Dostawy</label>
+        <input id="receiverAddress" type="text" required>
+      </div>
 
-      <label for="receiverPhone">Numer Telefonu</label>
-      <input id="receiverPhone" type="tel" required>
+      <div class="form-group">
+        <label for="receiverPhone" class="required">Numer Telefonu</label>
+        <input id="receiverPhone" type="tel" required>
+      </div>
 
-      <label for="packageNote">Opis</label>
-      <textarea id="packageNote" rows="2"></textarea>
+      <div class="form-group">
+        <label for="packageNote">Opis</label>
+        <textarea id="packageNote" rows="2"></textarea>
+      </div>
 
       <button class="worker-btn full" type="submit">Utwórz</button>
     </form>
@@ -123,9 +147,12 @@
     listEl.innerHTML = '';
     const filtered = shipments.filter(matchesFilters);
     if(!filtered.length){
-      const empty = document.createElement('p');
+      const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.textContent = 'Brak wyników.';
+      empty.innerHTML = `
+        <div class="empty-icon">📦</div>
+        <div class="empty-text">Brak przesyłek do wyświetlenia</div>
+      `;
       listEl.appendChild(empty);
       selectedId = '';
       return;
@@ -167,8 +194,21 @@
       return;
     }
     const shipment = shipments.find(item => item.id === selectedId);
+    function getStatusBadgeClass(status) {
+      const statusMap = {
+        'Utworzona': 'utworzona',
+        'W drodze': 'w-drodze',
+        'Dostarczona': 'dostarczona',
+        'Wydana klientowi': 'wydana-klientowi',
+        'Przyjęta': 'przyjeta',
+        'Magazyn': 'magazyn',
+        'Gotowa do wysyłki': 'gotowa-do-wysylki',
+        'Wysłana': 'wyslana'
+      };
+      return statusMap[status] || 'utworzona';
+    }
     issueCode.textContent = shipment.id;
-    issueStatus.textContent = 'Status: ' + shipment.status;
+    issueStatus.innerHTML = 'Status: <span class="status-badge ' + getStatusBadgeClass(shipment.status) + '">' + shipment.status + '</span>';
     issueDate.textContent = 'Data wysłania: ' + shipment.date.split('-').reverse().join('-');
     openOverlay(issueOverlay);
   });
