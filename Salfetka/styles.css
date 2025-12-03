@@ -75,7 +75,7 @@ input::placeholder {
 
 /* Карточка - центрированная, современная */
 .panel{
-  background: #f9fafb;
+  background: #fafbff;
   border-radius: 28px;
   padding: 48px 40px;
   box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15), 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -271,6 +271,7 @@ input::placeholder {
   height: 20px;
 }
 
+/* Современные инпуты - круглые */
 .input{
   width: 100%;
   background: #fff;
@@ -350,6 +351,7 @@ input::placeholder {
 }
 
 /* Secondary кнопка - светлая, контурная с улучшенными hover-эффектами */
+
 .btn-secondary {
   width: 100%;
   display: inline-block;
@@ -473,7 +475,6 @@ input::placeholder {
   .topbar .topbar-nav {
     flex-wrap: wrap;
   }
-
   .form-grid{
     grid-template-columns:1fr;
   }
@@ -593,19 +594,19 @@ input::placeholder {
 .filter-card{
   background: #ffffff;
   border-radius: 20px;
-  padding: 32px;
+  padding: 28px;
   display:flex;
   flex-direction:column;
-  gap: 24px;
+  gap: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   border: 1px solid #e0e7ff;
 }
 .filter-card h2{
-  margin:0 0 24px;
+
+  margin:0 0 16px;
   font-size: 24px;
   color: #1a1a1a;
   font-weight: 700;
-  text-align: left;
 }
 .input.slim{
   width:100%;
@@ -628,25 +629,23 @@ input::placeholder {
 }
 .shipments-card{
   background: #ffffff;
-  border-radius: 20px;
-  padding: 32px;
+  border-radius: 16px;
+  padding: 24px 32px;
   display:flex;
   flex-direction:column;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e0e7ff;
 }
 .shipments-card h2{
-  margin:0 0 24px;
-  font-size: 24px;
+  margin:0 0 16px;
+  font-size: 26px;
   font-weight: 700;
   color: #1a1a1a;
-  text-align: left;
 }
 .shipments-list{
   flex:1;
   display:flex;
   flex-direction:column;
-  gap: 16px;
+  gap: 12px;
   max-height:360px;
   overflow:auto;
   padding-right:8px;
@@ -655,7 +654,7 @@ input::placeholder {
   border:none;
   background: #ffffff;
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 18px 20px;
   display:grid;
   grid-template-columns:2fr 1fr 1fr;
   gap: 16px;
@@ -918,16 +917,15 @@ input::placeholder {
   animation: fadeInScale 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .delivery-list-card h1{
-  font-size: 32px;
-  margin:0 0 24px;
+  font-size: 28px;
+  margin:0 0 20px;
   font-weight: 700;
   color: #1a1a1a;
-  text-align: left;
 }
 .delivery-list{
   display:flex;
   flex-direction:column;
-  gap: 16px;
+  gap: 12px;
 }
 .delivery-row{
   border:none;
@@ -1033,21 +1031,20 @@ input::placeholder {
 .worker-search{
   background: #ffffff;
   border-radius: 20px;
-  padding: 32px;
+  padding: 24px;
   display:flex;
   flex-direction:column;
-  gap: 24px;
+  gap: 14px;
   box-sizing:border-box;
   max-width:100%;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   border: 1px solid #e0e7ff;
 }
 .worker-search h1{
-  font-size: 24px;
-  margin:0 0 24px;
+  font-size: 22px;
+  margin:0 0 16px;
   color: #1a1a1a;
   font-weight: 700;
-  text-align: left;
 }
 .worker-input{
   width:100%;
@@ -1095,13 +1092,19 @@ input::placeholder {
 .worker-btn.full{
   width:100%;
 }
+
+.worker-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  background: white;
+}
 .worker-results{
   background: #ffffff;
   border-radius: 20px;
-  padding: 32px;
+  padding: 24px 32px;
   display:flex;
   flex-direction:column;
-  gap: 24px;
+  gap: 20px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   border: 1px solid #e0e7ff;
 }
@@ -1119,7 +1122,7 @@ input::placeholder {
 .worker-list{
   display:flex;
   flex-direction:column;
-  gap: 16px;
+  gap: 12px;
 }
 .worker-row{
   border:none;
@@ -1157,8 +1160,8 @@ input::placeholder {
   box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
 }
 .worker-row:hover {
-  transform: translateY(-3px) scale(1.01);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
   border-color: #667eea;
 }
 
@@ -1254,17 +1257,14 @@ input::placeholder {
   font-weight: 600;
   color: #1a1a1a;
   font-size: 14px;
-  margin-bottom: 8px;
-  display: block;
 }
 .modal-form input,
 .modal-form textarea{
-  width: 100%;
-  border: 1.5px solid #e2e8f0;
+  border: 2px solid #e0e7ff;
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 15px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   font-family: 'Inter', sans-serif;
 }

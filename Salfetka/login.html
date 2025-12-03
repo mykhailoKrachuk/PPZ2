@@ -24,7 +24,7 @@
   <main class="panel">
     <h1 class="panel-title">Log In</h1>
 
-    <form id="loginForm" class="form-narrow centered" autocomplete="off">
+    <form id="loginForm" class="form-narrow centered" autocomplete="off" method="post" action="/backend/login.php">
       <div class="form-group">
         <label for="login" class="required">Login</label>
         <div class="input-wrapper">
@@ -34,7 +34,7 @@
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
           </div>
-          <input id="login" class="input has-icon" type="text" placeholder="Wpisz login" required>
+          <input id="login" class="input has-icon" type="text" name="login" placeholder="Wpisz login" required>
           <div class="error-message" id="loginError"></div>
         </div>
       </div>
@@ -48,7 +48,7 @@
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
           </div>
-          <input id="password" class="input has-icon" type="password" placeholder="Wpisz hasło" required>
+          <input id="password" class="input has-icon" type="password" name="password" placeholder="Wpisz hasło" required>
           <button type="button" class="password-toggle" id="passwordToggle" aria-label="Pokaż hasło">
             <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -60,18 +60,29 @@
       </div>
 
       <div class="form-group">
-        <label for="role" class="required">Rola</label>
-        <select id="role" class="input" required>
+        <label for="role">Rola</label>
+        <select id="role" class="input">
           <option value="" disabled selected>Wybierz rolę</option>
           <option value="Klient">Klient</option>
           <option value="Pracownik">Pracownik</option>
           <option value="Dział dostaw">Dział dostaw</option>
         </select>
-        <div class="error-message" id="roleError"></div>
       </div>
 
       <button class="btn-primary" type="submit">Zaloguj się</button>
       <button class="btn-secondary" type="button" onclick="window.location.href='register.html'">Zarejestruj się</button>
+
+      <div class="error" style="margin-top:8px; grid-column: 1 / -1;">
+        <script>
+          const map = {
+            empty   : 'Podaj login i hasło.',
+            badcreds: 'Nieprawidłowy login lub hasło.',
+            auth    : 'Zaloguj się, aby kontynuować.'
+          };
+          const k = new URLSearchParams(location.search).get('err');
+          if (map[k]) document.write('<p>'+map[k]+'</p>');
+        </script>
+      </div>
     </form>
   </main>
 
@@ -100,65 +111,6 @@
     }
   });
 
-  loginForm.addEventListener('submit', function(e){
-    e.preventDefault();
-    const loginInput = document.getElementById('login');
-    const passwordInput = document.getElementById('password');
-    const roleInput = document.getElementById('role');
-    const loginError = document.getElementById('loginError');
-    const passwordError = document.getElementById('passwordError');
-    const roleError = document.getElementById('roleError');
-    
-    // Сброс ошибок
-    loginInput.classList.remove('error');
-    passwordInput.classList.remove('error');
-    roleInput.classList.remove('error');
-    loginError.classList.remove('show');
-    passwordError.classList.remove('show');
-    roleError.classList.remove('show');
-    
-    let hasError = false;
-    const login = loginInput.value.trim();
-    if(!login){ 
-      loginInput.classList.add('error');
-      loginError.textContent = 'Podaj login.';
-      loginError.classList.add('show');
-      hasError = true;
-    }
-    
-    const password = passwordInput.value.trim();
-    if(!password){ 
-      passwordInput.classList.add('error');
-      passwordError.textContent = 'Podaj hasło.';
-      passwordError.classList.add('show');
-      hasError = true;
-    }
-    
-    const role = roleInput.value;
-    if(!role){ 
-      roleInput.classList.add('error');
-      roleError.textContent = 'Wybierz rolę.';
-      roleError.classList.add('show');
-      hasError = true;
-    }
-    
-    if(hasError) return;
-
-    if(role === 'Klient'){
-      window.location.href = 'client.html';
-      return;
-    }
-    if(role === 'Pracownik'){
-      window.location.href = 'worker.html';
-      return;
-    }
-    if(role === 'Dział dostaw'){
-      window.location.href = 'delivery.html';
-      return;
-    }
-
-    alert('Witaj, ' + login + ' (' + role + ')! (demo logowania)');
-  });
 </script>
 </body>
 </html>

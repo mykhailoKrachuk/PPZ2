@@ -1,3 +1,10 @@
+<?php
+require __DIR__ . '/../backend/require_auth.php';
+requireRole('worker'); // только сотрудники
+
+$user = $_SESSION['user'];
+?>
+
 <!doctype html>
 <html lang="pl">
 <head>

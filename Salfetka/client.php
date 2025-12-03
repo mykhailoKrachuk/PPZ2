@@ -1,3 +1,10 @@
+<?php
+require __DIR__ . '/../backend/require_auth.php';
+requireRole('user'); // впускаем только клиентов
+
+$user = $_SESSION['user'];
+?>
+
 <!doctype html>
 <html lang="pl">
 <head>
