@@ -4,7 +4,7 @@ global $db;
 
 require __DIR__ . '/config.php';
 require __DIR__ . '/require_auth.php';
-require_auth(['user']); // клиент смотрит только свои посылки
+requireRole('user'); // клиент смотрит только свои посылки
 
 header('Content-Type: application/json; charset=utf-8');
 
