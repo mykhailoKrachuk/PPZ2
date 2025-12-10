@@ -1,332 +1,254 @@
 <?php
+declare(strict_types=1);
+global $db;
+
 require __DIR__ . '/../backend/require_auth.php';
-requireRole('worker'); // только сотрудники
+requireRole('worker');                 // только сотрудник
+require __DIR__ . '/../backend/config.php';
 
-$user = $_SESSION['user'];
+function s(string $v): string { return htmlspecialchars($v ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+function g(string $k): string { return trim((string)($_GET[$k] ?? '')); }
+
+$ok    = g('ok');
+$err   = g('err');
+$numOk = g('num');
+
+$search = g('q');
+$found  = null;
+if ($search !== '') {
+    $st = $db->prepare("SELECT * FROM parcel WHERE parcel_number = :n LIMIT 1");
+    $st->execute([':n'=>$search]);
+    $found = $st->fetch(PDO::FETCH_ASSOC) ?: null;
+}
+
+// Списки
+$limit = 50;
+$active = $db->query("
+    SELECT parcel_number, status, created_at, sent_at, received_at, issued_at,
+           sender_name, sender_address, phone, user_id, size, weight, price, description
+    FROM parcel
+    WHERE status <> 'delivered'
+    ORDER BY created_at DESC
+    LIMIT {$limit}
+")->fetchAll(PDO::FETCH_ASSOC);
+
+$delivered = $db->query("
+    SELECT parcel_number, issued_at, sender_name, phone, user_id
+    FROM parcel
+    WHERE status = 'delivered'
+    ORDER BY issued_at DESC NULLS LAST, created_at DESC
+    LIMIT {$limit}
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Strona Pracownika</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pracownik · Przesyłki</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .toolbar{display:flex;gap:.5rem;align-items:center;justify-content:space-between;margin-bottom:12px}
+        .tabs{display:flex;gap:8px;margin:12px 0}
+        .tab{padding:8px 12px;border-radius:10px;background:#f1f5f9;cursor:pointer}
+        .tab.active{background:#dbeafe}
+        .hidden{display:none}
+        .table{width:100%;border-collapse:collapse}
+        .table th,.table td{padding:8px 10px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}
+        .badge{padding:2px 8px;border-radius:999px;font-size:12px;background:#eef2ff}
+        .notice{padding:10px 12px;border-radius:12px}
+        .notice.success{background:#ecfdf5;color:#065f46}
+        .notice.error{background:#fef2f2;color:#991b1b}
+        /* modal */
+        .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px}
+        .modal{background:#fff;border-radius:16px;max-width:900px;width:100%;padding:18px}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        @media (max-width:800px){.grid{grid-template-columns:1fr}}
+    </style>
 </head>
 <body>
-<div class="page worker-page">
-  <header class="topbar">
-    <a href="index.html" class="logo">
-      <div class="logo-icon">📦</div>
-      <span>Salfetka</span>
-    </a>
-    <nav class="topbar-nav">
-      <a class="link-btn" href="index.html">Wyszukaj przesyłkę</a>
-      <a class="link-btn" href="login.html">Wyłoguj się</a>
-    </nav>
-  </header>
+<div class="page">
+    <header class="topbar right">
+        <nav><a class="link-btn" href="index.html">Wróć</a></nav>
+    </header>
 
-  <main class="worker-panel">
-    <section class="worker-search">
-      <h1 class="section-title">Strona Pracownika</h1>
-      <div class="form-group">
-        <label for="searchNumber">Numer przesyłki</label>
-        <input id="searchNumber" class="worker-input" type="text" placeholder="Wpisz numer">
-      </div>
+    <main class="panel">
+        <h1 class="panel-title">Lista przesyłek</h1>
 
-      <div class="form-group">
-        <label for="searchFirst">Imię</label>
-        <input id="searchFirst" class="worker-input" type="text" placeholder="Wpisz imię">
-      </div>
+        <?php if ($ok): ?>
+            <div class="notice success">
+                <?php if ($ok==='created'): ?>
+                    Utworzono paczkę. Numer śledzenia: <b><?= s($numOk) ?></b>.
+                <?php elseif ($ok==='delivered'): ?>
+                    Paczka <b><?= s($numOk) ?></b> została wydana (delivered).
+                <?php else: ?>
+                    Operacja zakończona pomyślnie.
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
 
-      <div class="form-group">
-        <label for="searchLast">Nazwisko</label>
-        <input id="searchLast" class="worker-input" type="text" placeholder="Wpisz nazwisko">
-      </div>
+        <?php if ($err): ?>
+            <div class="notice error">
+                <?php
+                $map = [
+                    'fill' => 'Wypełnij wszystkie pola paczki.',
+                    'user' => 'Podaj e-mail lub telefon klienta.',
+                    'w'    => 'Waga musi być liczbą.',
+                    'pr'   => 'Cena musi być liczbą.',
+                    'nouser' => 'Nie znaleziono klienta o podanym e-mailu lub telefonie.',
+                    'nonum'  => 'Brak numeru przesyłki.',
+                    'notallowed' => 'Nie można wydać tej paczki (już wydana lub anulowana).',
+                    'badmethod'  => 'Nieprawidłowa metoda.',
+                    'server'     => 'Błąd serwera. Spróbuj ponownie.',
+                ];
+                $chunks = explode(',', $err);
+                foreach ($chunks as $code) {
+                    echo '<div>'. s($map[$code] ?? ('Błąd: '.$code)) .'</div>';
+                }
+                ?>
+            </div>
+        <?php endif; ?>
 
-      <button id="createBtn" class="worker-btn full" type="button">Utwórz</button>
-    </section>
-
-    <section class="worker-results">
-      <h2 class="section-title">Lista przesyłek</h2>
-      <div class="worker-controls">
-        <div class="form-group" style="margin-bottom: 0;">
-          <label for="destinationSelect">Miasto docelowe</label>
-          <select id="destinationSelect" class="worker-input select">
-            <option value="">Wszystkie miasta</option>
-            <option value="Katowice">Katowice</option>
-            <option value="Poznań">Poznań</option>
-            <option value="Gdańsk">Gdańsk</option>
-            <option value="Wrocław">Wrocław</option>
-            <option value="Warszawa">Warszawa</option>
-          </select>
+        <div class="toolbar">
+            <form method="get" class="form-narrow" style="display:flex;gap:8px;">
+                <input class="input" type="text" name="q" placeholder="Numer śledzenia" value="<?= s($search) ?>">
+                <button class="btn-primary" type="submit">Szukaj</button>
+            </form>
+            <button id="btnNew" class="btn-primary" type="button">Nowa paczka</button>
         </div>
-        <button id="detailsBtn" class="worker-btn" type="button" style="align-self: flex-end;">Wyświetl</button>
-      </div>
 
-      <div id="workerList" class="worker-list"></div>
-    </section>
-  </main>
+        <?php if ($search !== ''): ?>
+            <div class="panel" style="padding:12px;margin-bottom:12px;">
+                <h3>Wynik wyszukiwania</h3>
+                <?php if ($found): ?>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;">
+                        <div><b>Numer:</b> <?= s($found['parcel_number']) ?></div>
+                        <div><b>Status:</b> <span class="badge"><?= s($found['status']) ?></span></div>
+                        <div><b>Klient (user_id):</b> <?= s((string)$found['user_id']) ?></div>
+                        <div><b>Telefon:</b> <?= s($found['phone']) ?></div>
+                        <div><b>Nadawca:</b> <?= s($found['sender_name']) ?></div>
+                        <div><b>Adres nadawcy:</b> <?= s($found['sender_address']) ?></div>
+                        <div><b>Opis:</b> <?= s($found['description']) ?></div>
+                        <div><b>Wymiary:</b> <?= s($found['size']) ?>; <b>Waga:</b> <?= s($found['weight']) ?>; <b>Cena:</b> <?= s($found['price']) ?></div>
+                    </div>
+
+                    <?php if ($found['status'] !== 'delivered' && $found['status'] !== 'canceled'): ?>
+                        <form method="post" action="/backend/parcel_deliver.php" style="margin-top:8px;">
+                            <input type="hidden" name="parcel_number" value="<?= s($found['parcel_number']) ?>">
+                            <button class="btn-secondary" type="submit">Wydaj paczkę (oznacz jako delivered)</button>
+                        </form>
+                    <?php else: ?>
+                        <div class="notice" style="background:#f8fafc">Ta paczka jest już <?= s($found['status']) ?>.</div>
+                    <?php endif; ?>
+
+                <?php else: ?>
+                    <div class="notice">Brak paczki o numerze: <b><?= s($search) ?></b>.</div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="active">Aktywne</div>
+            <div class="tab" data-tab="delivered">Wydane</div>
+        </div>
+
+        <!-- Akтивные -->
+        <section id="tab-active">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Numer</th><th>Status</th><th>Utworzono</th><th>Klient</th><th>Telefon</th><th>Opis</th><th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($active as $r): ?>
+                    <tr>
+                        <td><?= s($r['parcel_number']) ?></td>
+                        <td><span class="badge"><?= s($r['status']) ?></span></td>
+                        <td><?= s((string)$r['created_at']) ?></td>
+                        <td><?= s((string)$r['user_id']) ?></td>
+                        <td><?= s($r['phone']) ?></td>
+                        <td><?= s($r['description']) ?></td>
+                        <td>
+                            <?php if ($r['status'] !== 'delivered' && $r['status'] !== 'canceled'): ?>
+                                <form method="post" action="/backend/parcel_deliver.php" style="display:inline">
+                                    <input type="hidden" name="parcel_number" value="<?= s($r['parcel_number']) ?>">
+                                    <button class="btn-primary" type="submit">Wydaj</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Выданные -->
+        <section id="tab-delivered" class="hidden">
+            <table class="table">
+                <thead><tr><th>Numer</th><th>Wydano</th><th>Klient</th><th>Telefon</th></tr></thead>
+                <tbody>
+                <?php foreach ($delivered as $r): ?>
+                    <tr>
+                        <td><?= s($r['parcel_number']) ?></td>
+                        <td><?= s((string)$r['issued_at']) ?></td>
+                        <td><?= s((string)$r['user_id']) ?></td>
+                        <td><?= s($r['phone']) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
 </div>
 
-<div id="createOverlay" class="modal-overlay hidden" aria-hidden="true">
-  <div class="modal-card worker-modal" role="dialog" aria-modal="true" aria-labelledby="createHeading">
-    <button class="close-btn" type="button" data-close="createOverlay" aria-label="Zamknij okno">&times;</button>
-    <h2 id="createHeading">Tworzenie Przesyłki</h2>
-    <form id="createForm" class="modal-form">
-      <div class="form-group">
-        <label for="receiverName" class="required">Imię i nazwisko odbiorcy</label>
-        <input id="receiverName" type="text" required>
-      </div>
+<!-- Модалка создания -->
+<div id="modal" class="modal-backdrop">
+    <div class="modal">
+        <h3 style="margin-bottom:10px;">Nowa paczka</h3>
+        <form method="post" action="/backend/parcel_create.php" class="grid" autocomplete="off">
+            <h4 style="grid-column:1/-1;margin:0;">Klient</h4>
+            <input class="input" type="email" name="user_mail"  placeholder="E-mail klienta (opcjonalnie)">
+            <input class="input" type="tel"   name="user_phone" placeholder="Telefon klienta (opcjonalnie)">
 
-      <div class="form-group">
-        <label for="receiverAddress" class="required">Adres Dostawy</label>
-        <input id="receiverAddress" type="text" required>
-      </div>
+            <h4 style="grid-column:1/-1;margin:0;">Dane paczki</h4>
+            <input class="input" type="text" name="sender_name"    placeholder="Nadawca" required>
+            <input class="input" type="text" name="sender_address" placeholder="Adres nadawcy" required>
+            <input class="input" type="tel"  name="phone"          placeholder="Telefon kontaktowy" required>
+            <input class="input" type="text" name="description"    placeholder="Opis" required>
+            <input class="input" type="text" name="size"           placeholder="Rozmiar (np. S/M/L)" required>
+            <input class="input" type="text" name="weight"         placeholder="Waga (kg)" required>
+            <input class="input" type="text" name="price"          placeholder="Cena (PLN)" required>
 
-      <div class="form-group">
-        <label for="receiverPhone" class="required">Numer Telefonu</label>
-        <input id="receiverPhone" type="tel" required>
-      </div>
-
-      <div class="form-group">
-        <label for="packageNote">Opis</label>
-        <textarea id="packageNote" rows="2"></textarea>
-      </div>
-
-      <button class="worker-btn full" type="submit">Utwórz</button>
-    </form>
-  </div>
-</div>
-
-<div id="issueOverlay" class="modal-overlay hidden" aria-hidden="true">
-  <div class="modal-card worker-modal" role="dialog" aria-modal="true" aria-labelledby="issueHeading">
-    <button class="close-btn" type="button" data-close="issueOverlay" aria-label="Zamknij okno">&times;</button>
-    <h2 id="issueHeading">Informacje o przesyłce</h2>
-    <p id="issueCode" class="details-code">Wybierz przesyłkę</p>
-    <p id="issueStatus"></p>
-    <p id="issueDate"></p>
-    <div id="codeInputContainer" class="form-group hidden">
-      <label for="nadaniaCode">Kod nadania</label>
-      <input id="nadaniaCode" type="text" placeholder="Wpisz kod nadania" class="input">
+            <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+                <button type="button" id="btnCancel" class="btn-secondary">Anuluj</button>
+                <button type="submit" class="btn-primary">Utwórz</button>
+            </div>
+        </form>
     </div>
-    <button id="issueBtn" class="worker-btn full" type="button">wydaj</button>
-  </div>
-</div>
-
-<div id="successOverlay" class="modal-overlay hidden" aria-hidden="true">
-  <div class="modal-card worker-modal" role="dialog" aria-modal="true">
-    <button class="close-btn" type="button" data-close="successOverlay" aria-label="Zamknij okno">&times;</button>
-    <div class="success-message">
-      <div class="success-icon">✓</div>
-      <h3>Przesyłka wydana</h3>
-      <p>Na Twój email został wysłany kod.</p>
-      <button class="worker-btn full" type="button" data-close="successOverlay">OK</button>
-    </div>
-  </div>
 </div>
 
 <script>
-  const shipments = [
-    { id:'MFINBDJK87', destination:'Katowice', status:'Utworzona', date:'2025-10-24', receiverFirst:'Anna', receiverLast:'Nowak', address:'ul. Leśna 10, Katowice', phone:'+48 500 200 111', note:'Pilne' },
-    { id:'AMSDNA1192', destination:'Poznań', status:'W drodze', date:'2025-10-20', receiverFirst:'Marek', receiverLast:'Kowalski', address:'ul. Wiślana 3, Poznań', phone:'+48 501 111 222', note:'' },
-    { id:'HDJALAMA78', destination:'Gdańsk', status:'Otrzymana', date:'2025-10-23', receiverFirst:'Julia', receiverLast:'Mazur', address:'ul. Morska 7, Gdańsk', phone:'+48 502 333 444', note:'Delikatna zawartość' },
-    { id:'HSKNBDJK87', destination:'Wrocław', status:'Magazyn', date:'2025-10-19', receiverFirst:'Kamil', receiverLast:'Polański', address:'ul. Lipowa 17, Wrocław', phone:'+48 503 555 666', note:'' },
-    { id:'HKBYHSK227', destination:'Warszawa', status:'Gotowa do wysyłki', date:'2025-10-21', receiverFirst:'Olga', receiverLast:'Zielińska', address:'ul. Długa 4, Warszawa', phone:'+48 504 777 888', note:'Odbiór osobisty' }
-  ];
-
-  const filters = { number:'', first:'', last:'', destination:'' };
-  let selectedId = '';
-
-  const listEl = document.getElementById('workerList');
-  const destinationSelect = document.getElementById('destinationSelect');
-  const detailsBtn = document.getElementById('detailsBtn');
-  const createBtn = document.getElementById('createBtn');
-  const createOverlay = document.getElementById('createOverlay');
-  const issueOverlay = document.getElementById('issueOverlay');
-  const createForm = document.getElementById('createForm');
-  const issueBtn = document.getElementById('issueBtn');
-  const issueCode = document.getElementById('issueCode');
-  const issueStatus = document.getElementById('issueStatus');
-  const issueDate = document.getElementById('issueDate');
-  const codeInputContainer = document.getElementById('codeInputContainer');
-  const nadaniaCodeInput = document.getElementById('nadaniaCode');
-  const successOverlay = document.getElementById('successOverlay');
-
-  document.getElementById('searchNumber').addEventListener('input', e => { filters.number = e.target.value.trim().toLowerCase(); renderList(); });
-  document.getElementById('searchFirst').addEventListener('input', e => { filters.first = e.target.value.trim().toLowerCase(); renderList(); });
-  document.getElementById('searchLast').addEventListener('input', e => { filters.last = e.target.value.trim().toLowerCase(); renderList(); });
-  destinationSelect.addEventListener('change', e => { filters.destination = e.target.value; renderList(); });
-
-  function matchesFilters(item){
-    const numberOk = !filters.number || item.id.toLowerCase().includes(filters.number);
-    const firstOk = !filters.first || item.receiverFirst.toLowerCase().includes(filters.first);
-    const lastOk = !filters.last || item.receiverLast.toLowerCase().includes(filters.last);
-    const destOk = !filters.destination || item.destination === filters.destination;
-    return numberOk && firstOk && lastOk && destOk;
-  }
-
-  function renderList(){
-    listEl.innerHTML = '';
-    const filtered = shipments.filter(matchesFilters);
-    if(!filtered.length){
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.innerHTML = `
-        <div class="empty-icon">📦</div>
-        <div class="empty-text">Brak przesyłek do wyświetlenia</div>
-      `;
-      listEl.appendChild(empty);
-      selectedId = '';
-      return;
-    }
-    filtered.forEach(item => {
-      const btn = document.createElement('button');
-      btn.className = 'worker-row';
-      btn.type = 'button';
-      btn.dataset.id = item.id;
-      btn.innerHTML = `<span>${item.id}</span><strong>${item.destination.toLowerCase()}</strong>`;
-      btn.addEventListener('click', () => selectShipment(item.id, btn));
-      if(item.id === selectedId){
-        btn.classList.add('active');
-      }
-      listEl.appendChild(btn);
-    });
-  }
-
-  function selectShipment(id, button){
-    selectedId = id;
-    document.querySelectorAll('.worker-row').forEach(row => row.classList.remove('active'));
-    button.classList.add('active');
-  }
-
-  function openOverlay(element){
-    element.classList.remove('hidden');
-    element.setAttribute('aria-hidden', 'false');
-  }
-
-  function closeOverlay(element){
-    element.classList.add('hidden');
-    element.setAttribute('aria-hidden', 'true');
-  }
-
-  createBtn.addEventListener('click', () => openOverlay(createOverlay));
-  detailsBtn.addEventListener('click', () => {
-    if(!selectedId){
-      // Показываем модальное окно вместо alert
-      const errorOverlay = document.createElement('div');
-      errorOverlay.className = 'modal-overlay';
-      errorOverlay.innerHTML = `
-        <div class="modal-card worker-modal">
-          <button class="close-btn" type="button" onclick="this.closest('.modal-overlay').remove()">&times;</button>
-          <div class="success-message">
-            <div class="success-icon" style="color: #ef4444;">!</div>
-            <h3>Błąd</h3>
-            <p>Wybierz przesyłkę z listy.</p>
-            <button class="worker-btn full" type="button" onclick="this.closest('.modal-overlay').remove()">OK</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(errorOverlay);
-      return;
-    }
-    const shipment = shipments.find(item => item.id === selectedId);
-    function getStatusBadgeClass(status) {
-      const statusMap = {
-        'Utworzona': 'utworzona',
-        'W drodze': 'w-drodze',
-        'Dostarczona': 'dostarczona',
-        'Wydana klientowi': 'wydana-klientowi',
-        'Przyjęta': 'przyjeta',
-        'Otrzymana': 'dostarczona',
-        'Magazyn': 'magazyn',
-        'Gotowa do wysyłki': 'gotowa-do-wysylki',
-        'Wysłana': 'wyslana'
-      };
-      return statusMap[status] || 'utworzona';
-    }
-    issueCode.textContent = shipment.id;
-    issueStatus.innerHTML = 'Status: <span class="status-badge ' + getStatusBadgeClass(shipment.status) + '">' + shipment.status + '</span>';
-    issueDate.textContent = 'Data wysłania: ' + shipment.date.split('-').reverse().join('-');
-    
-    // Показываем поле для кода надання, если статус "Otrzymana" или "Przyjęta"
-    if(shipment.status === 'Otrzymana' || shipment.status === 'Przyjęta'){
-      codeInputContainer.classList.remove('hidden');
-      nadaniaCodeInput.value = '';
-    } else {
-      codeInputContainer.classList.add('hidden');
-    }
-    
-    openOverlay(issueOverlay);
-  });
-
-  issueBtn.addEventListener('click', () => {
-    if(!selectedId){ return; }
-    const shipment = shipments.find(item => item.id === selectedId);
-    
-    // Проверка кода надання, если требуется
-    if(shipment.status === 'Otrzymana' || shipment.status === 'Przyjęta'){
-      const code = nadaniaCodeInput.value.trim();
-      if(!code){
-        nadaniaCodeInput.classList.add('error');
-        nadaniaCodeInput.focus();
-        return;
-      }
-      nadaniaCodeInput.classList.remove('error');
-    }
-    
-    // Закрываем окно выдачи и показываем сообщение об успехе
-    closeOverlay(issueOverlay);
-    openOverlay(successOverlay);
-    
-    // Обновляем статус посылки
-    shipment.status = 'Wydana';
-  });
-
-  createForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const newShipment = {
-      id: 'NP' + Math.random().toString(36).slice(2, 8).toUpperCase(),
-      destination: filters.destination || 'Katowice',
-      status: 'Utworzona',
-      date: new Date().toISOString().split('T')[0],
-      receiverFirst: document.getElementById('receiverName').value.split(' ')[0] || 'Nowy',
-      receiverLast: document.getElementById('receiverName').value.split(' ')[1] || 'Klient',
-      address: document.getElementById('receiverAddress').value,
-      phone: document.getElementById('receiverPhone').value,
-      note: document.getElementById('packageNote').value || ''
+    const tabs = document.querySelectorAll('.tab');
+    const sections = {
+        active: document.getElementById('tab-active'),
+        delivered: document.getElementById('tab-delivered')
     };
-    shipments.unshift(newShipment);
-    e.target.reset();
-    closeOverlay(createOverlay);
-    renderList();
-  });
+    tabs.forEach(t => t.addEventListener('click', () => {
+        tabs.forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        const key = t.dataset.tab;
+        sections.active.classList.toggle('hidden', key!=='active');
+        sections.delivered.classList.toggle('hidden', key!=='delivered');
+    }));
 
-  document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', e => {
-      if(e.target === overlay){
-        closeOverlay(overlay);
-      }
-    });
-  });
-  document.querySelectorAll('[data-close]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = document.getElementById(btn.dataset.close);
-      if(target){ 
-        closeOverlay(target);
-        // Обновляем список после закрытия окна успеха
-        if(target.id === 'successOverlay'){
-          renderList();
-        }
-      }
-    });
-  });
-
-  renderList();
+    const modal = document.getElementById('modal');
+    const btnNew = document.getElementById('btnNew');
+    const btnCancel = document.getElementById('btnCancel');
+    btnNew.addEventListener('click', () => modal.style.display='flex');
+    btnCancel.addEventListener('click', () => modal.style.display='none');
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display='none'; });
 </script>
 </body>
 </html>
-

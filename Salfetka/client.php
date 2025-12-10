@@ -1,498 +1,209 @@
 <?php
 require __DIR__ . '/../backend/require_auth.php';
-requireRole('user'); // впускаем только клиентов
-
-$user = $_SESSION['user'];
+requireRole('user'); // только клиенты
 ?>
-
 <!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Strona klienta</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Moje przesyłki</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Макет: слева фильтр, справа список */
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            max-width: 1100px;
+            margin: 40px auto;
+            align-items: start;
+        }
+        .card { background: #fff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.08); padding: 20px; }
+        .card h2 { font-size: 18px; margin: 0 0 16px; }
+        .filter .input, .filter select { width: 100%; margin-bottom: 12px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+        .tab { padding: 8px 12px; border-radius: 999px; background: #eef3ff; cursor: pointer; user-select: none; }
+        .tab.active { background: linear-gradient(90deg,#6aa5ff,#7ab6ff); color:#fff; }
+        .list { display: flex; flex-direction: column; gap: 10px; }
+        .item { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+            padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid #eaf0ff; cursor: pointer; }
+        .pill { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+        .pill.gray { background:#eef2f6; color:#556; }
+        .pill.blue { background:#e9f1ff; color:#3173ff; }
+        .pill.green{ background:#eaf8f0; color:#1c8c4a; }
+        .pill.purple{ background:#efeaff; color:#6c4af2; }
+        .muted { color:#778; font-size: 12px; }
+        .actions { display:flex; gap:8px; }
+        .btn-outline { padding:6px 10px; border-radius:8px; border:1px solid #cee2ff; background:#fff; cursor:pointer; }
+        /* модалка */
+        dialog { width: 760px; border: none; border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,.25); }
+        dialog::backdrop { background: rgba(0,0,0,.35); }
+        .modal-head { display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px; }
+        .close-x { cursor:pointer; font-size:22px; line-height:1; border:none; background:transparent; }
+    </style>
 </head>
 <body>
-<div class="page client-page">
-  <header class="topbar">
-    <a href="index.html" class="logo">
-      <div class="logo-icon">📦</div>
-      <span>Salfetka</span>
-    </a>
-    <nav class="topbar-nav">
-      <a class="link-btn" href="index.html">Wyszukaj przesyłkę</a>
-      <a class="link-btn" href="login.html">Wyłoguj się</a>
-    </nav>
-  </header>
+<div class="page">
+    <header class="topbar right">
+        <nav>
+            <a class="link-btn" href="index.html">Wyszukaj przesyłkę</a>
+            <a class="link-btn" href="/backend/logout.php">Wyloguj się</a>
+        </nav>
+    </header>
 
-  <main class="client-panel">
-    <aside class="filter-card">
-      <h2 class="section-title">Filtruj</h2>
-      <div class="form-group">
-        <label for="filterId">Numer przesyłki</label>
-        <input id="filterId" class="input slim" type="text" placeholder="Wpisz numer przesyłki">
-      </div>
+    <main class="layout">
+        <!-- Фильтр -->
+        <section class="card filter">
+            <h2>Filtruj</h2>
+            <input id="q" class="input" type="text" placeholder="Numer przesyłki">
+            <input id="date" class="input" type="date">
+            <select id="status" class="input">
+                <option value="">Wszystkie statusy</option>
+                <option value="created">UTWORZONA</option>
+                <option value="sent">WYSŁANA</option>
+                <option value="in_transit">W DRODZE</option>
+                <option value="received">OTRZYMANA W PUNKCIE</option>
+            </select>
+            <button id="apply" class="primary" type="button">Szukaj</button>
+            <button id="reset" class="btn-outline" type="button">Reset</button>
+        </section>
 
-      <div class="form-group">
-        <label for="filterDate">Data nadania</label>
-        <input id="filterDate" class="input slim" type="date">
-      </div>
-
-      <div class="form-group">
-        <label for="filterStatus">Status</label>
-        <select id="filterStatus" class="input slim">
-          <option value="">Wszystkie statusy</option>
-          <option>Utworzona</option>
-          <option>Wysłana</option>
-          <option>Otrzymana</option>
-          <option>Wydana</option>
-        </select>
-      </div>
-    </aside>
-
-    <section class="shipments-card">
-      <h2 class="section-title">Lista przesyłek</h2>
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="active" id="tabActive">Aktywne</button>
-        <button class="tab-btn" data-tab="archive" id="tabArchive">Archiwum</button>
-      </div>
-      <div id="shipmentList" class="shipments-list"></div>
-      <div id="archiveList" class="shipments-list hidden"></div>
-    </section>
-
-    <div id="detailsOverlay" class="details-overlay hidden" aria-hidden="true">
-      <div class="details-card" role="dialog" aria-modal="true" aria-labelledby="detailsHeading">
-        <button id="closeDetails" class="close-btn" type="button" aria-label="Zamknij okno">&times;</button>
-        <h3 id="detailsHeading">Informacje o przesyłce</h3>
-        <p class="details-code" id="detailsCode">Wybierz przesyłkę</p>
-        <p id="detailsStatus"></p>
-        <p id="detailsDate"></p>
-        <div id="detailsRoute" class="route-timeline"></div>
-      </div>
-    </div>
-
-    <div id="infoOverlay" class="details-overlay hidden" aria-hidden="true">
-      <div class="details-card info-card" role="dialog" aria-modal="true" aria-labelledby="infoHeading">
-        <button id="closeInfo" class="close-btn" type="button" aria-label="Zamknij okno">&times;</button>
-        <h3 id="infoHeading">Szczegóły przesyłki</h3>
-        <div id="infoContent" class="info-content"></div>
-      </div>
-    </div>
-  </main>
+        <!-- Список -->
+        <section class="card">
+            <h2>Lista przesyłek</h2>
+            <div class="tabs">
+                <div class="tab active" data-tab="active">Aktywne</div>
+                <div class="tab" data-tab="archive">Archiwum</div>
+            </div>
+            <div id="list" class="list"></div>
+            <p id="empty" class="muted" style="display:none">Brak wyników.</p>
+        </section>
+    </main>
 </div>
 
+<!-- Модалка с деталями -->
+<dialog id="dlg">
+    <div class="modal-head">
+        <h3>Szczegóły przesyłki</h3>
+        <button class="close-x" onclick="dlg.close()">×</button>
+    </div>
+    <div id="details" class="muted">Ładowanie…</div>
+</dialog>
+
 <script>
-  // Prosta \"baza danych\" przesyłek z 4 statusami i pełnymi danymi
-  const shipments = [
-    { 
-      id:'NPX66UW2GP', 
-      status:'Utworzona', 
-      date:'2025-10-24',
-      created_at: '2025-10-22 10:12',
-      sent_at: null,
-      received_at: null,
-      issued_at: null,
-      phone: '+48 500 123 456',
-      parcel: 'Paczka standardowa',
-      sender: 'Sklep Online Sp. z o.o.',
-      sender_name: 'Jan Kowalski',
-      sender_address: 'ul. Przykładowa 15, 00-001 Warszawa',
-      description: 'Elektronika - słuchawki bezprzewodowe',
-      size: '30x20x15 cm',
-      weight: '0.5 kg',
-      price: '249.99 PLN',
-      route: [
-        { status: 'Utworzona', label: 'Utworzona', date: '22-10-2025 10:12', location: 'Nadanie paczki' }
-      ]
-    },
-    { 
-      id:'WX90PL0AA1', 
-      status:'Wysłana', 
-      date:'2025-10-20',
-      created_at: '2025-10-18 09:05',
-      sent_at: '2025-10-19 14:30',
-      received_at: null,
-      issued_at: null,
-      phone: '+48 501 234 567',
-      parcel: 'Paczka ekspresowa',
-      sender: 'Moda Fashion S.A.',
-      sender_name: 'Anna Nowak',
-      sender_address: 'ul. Modowa 42, 30-001 Kraków',
-      description: 'Odzież - kurtka zimowa',
-      size: '40x30x10 cm',
-      weight: '1.2 kg',
-      price: '399.00 PLN',
-      route: [
-        { status: 'Utworzona', label: 'Utworzona', date: '18-10-2025 09:05', location: 'Rejestracja przesyłki' },
-        { status: 'Wysłana', label: 'Wysłana z magazynu', date: '19-10-2025 14:30', location: 'Magazyn centralny' }
-      ]
-    },
-    { 
-      id:'JL55MK7CD2', 
-      status:'Otrzymana', 
-      date:'2025-09-18',
-      created_at: '2025-09-15 11:20',
-      sent_at: '2025-09-16 08:10',
-      received_at: '2025-09-18 17:30',
-      issued_at: null,
-      phone: '+48 502 345 678',
-      parcel: 'Paczka standardowa',
-      sender: 'Księgarnia Online',
-      sender_name: 'Piotr Wiśniewski',
-      sender_address: 'ul. Książkowa 7, 60-001 Poznań',
-      description: 'Książki - zestaw 3 pozycji',
-      size: '25x18x12 cm',
-      weight: '0.8 kg',
-      price: '89.99 PLN',
-      route: [
-        { status: 'Utworzona', label: 'Utworzona', date: '15-09-2025 11:20', location: 'Utworzenie etykiety' },
-        { status: 'Wysłana', label: 'Wysłana', date: '16-09-2025 08:10', location: 'Centrum sortowania' },
-        { status: 'Otrzymana', label: 'Otrzymana w paczkomacie', date: '18-09-2025 17:30', location: 'Paczkamat JL-02' }
-      ]
-    },
-    { 
-      id:'BT73RT1XZ3', 
-      status:'Wydana', 
-      date:'2025-08-04',
-      created_at: '2025-08-01 10:00',
-      sent_at: '2025-08-02 13:40',
-      received_at: '2025-08-03 09:15',
-      issued_at: '2025-08-04 18:02',
-      phone: '+48 503 456 789',
-      parcel: 'Paczka priorytetowa',
-      sender: 'TechStore Sp. z o.o.',
-      sender_name: 'Marek Zieliński',
-      sender_address: 'ul. Techniczna 99, 00-100 Warszawa',
-      description: 'Smartfon - model premium',
-      size: '20x15x5 cm',
-      weight: '0.3 kg',
-      price: '3299.00 PLN',
-      route: [
-        { status: 'Utworzona', label: 'Utworzona', date: '01-08-2025 10:00', location: 'Sklep internetowy' },
-        { status: 'Wysłana', label: 'Wysłana', date: '02-08-2025 13:40', location: 'Kurier w trasie' },
-        { status: 'Otrzymana', label: 'Otrzymana w punkcie', date: '03-08-2025 09:15', location: 'Punkt odbioru BT-17' },
-        { status: 'Wydana', label: 'Wydana klientowi', date: '04-08-2025 18:02', location: 'Punkt odbioru BT-17' }
-      ]
-    },
-    { 
-      id:'QP19ZD8LK4', 
-      status:'Wysłana', 
-      date:'2025-10-18',
-      created_at: '2025-10-16 12:48',
-      sent_at: '2025-10-18 08:20',
-      received_at: null,
-      issued_at: null,
-      phone: '+48 504 567 890',
-      parcel: 'Paczka standardowa',
-      sender: 'Dom i Ogród',
-      sender_name: 'Katarzyna Lewandowska',
-      sender_address: 'ul. Ogrodowa 23, 90-001 Łódź',
-      description: 'Narzędzia ogrodowe - zestaw',
-      size: '50x30x20 cm',
-      weight: '2.5 kg',
-      price: '179.99 PLN',
-      route: [
-        { status: 'Utworzona', label: 'Utworzona', date: '16-10-2025 12:48', location: 'Nadanie' },
-        { status: 'Wysłana', label: 'Wysłana', date: '18-10-2025 08:20', location: 'Trasa do paczkomatu' }
-      ]
-    }
-  ];
+    const listEl   = document.getElementById('list');
+    const emptyEl  = document.getElementById('empty');
+    const tabs     = document.querySelectorAll('.tab');
+    const dlg      = document.getElementById('dlg');
+    const details  = document.getElementById('details');
 
-  const listEl = document.getElementById('shipmentList');
-  const archiveListEl = document.getElementById('archiveList');
-  const tabActive = document.getElementById('tabActive');
-  const tabArchive = document.getElementById('tabArchive');
-  const detailsOverlay = document.getElementById('detailsOverlay');
-  const closeDetailsBtn = document.getElementById('closeDetails');
-  const detailCode = document.getElementById('detailsCode');
-  const detailStatus = document.getElementById('detailsStatus');
-  const detailDate = document.getElementById('detailsDate');
-  const detailRoute = document.getElementById('detailsRoute');
-  
-  const infoOverlay = document.getElementById('infoOverlay');
-  const closeInfoBtn = document.getElementById('closeInfo');
-  const infoContent = document.getElementById('infoContent');
+    let currentTab = 'active';
 
-  const filterId = document.getElementById('filterId');
-  const filterDate = document.getElementById('filterDate');
-  const filterStatus = document.getElementById('filterStatus');
-
-  const filters = {
-    id: '',
-    date: '',
-    status: ''
-  };
-
-  function applyFilters(isArchive = false){
-    const idValue = filters.id.toLowerCase();
-    return shipments.filter(item => {
-      const isArchived = item.status === 'Wydana';
-      if(isArchive !== isArchived) return false;
-      
-      const matchesId = !idValue || item.id.toLowerCase().includes(idValue);
-      const matchesDate = !filters.date || item.date === filters.date;
-      const matchesStatus = !filters.status || item.status === filters.status;
-      return matchesId && matchesDate && matchesStatus;
-    });
-  }
-
-  function getStatusBadgeClass(status) {
-    const statusMap = {
-      'Utworzona': 'utworzona',
-      'Wysłana': 'w-drodze',
-      'Otrzymana': 'dostarczona',
-      'Wydana': 'wydana-klientowi'
-    };
-    return statusMap[status] || 'utworzona';
-  }
-
-  function getStatusLabel(status) {
-    const statusMap = {
-      'Utworzona': 'Utworzona',
-      'Wysłana': 'Wysłana',
-      'Otrzymana': 'Otrzymana',
-      'Wydana': 'Wydana'
-    };
-    return statusMap[status] || status;
-  }
-
-  function renderList(isArchive = false){
-    const targetList = isArchive ? archiveListEl : listEl;
-    const filtered = applyFilters(isArchive);
-    // Сортировка по дате в обратном порядке (более новые выше)
-    const sorted = [...filtered].sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return dateB - dateA; // Обратный порядок
-    });
-    
-    targetList.innerHTML = '';
-    if(!sorted.length){
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.innerHTML = `
-        <div class="empty-icon">📦</div>
-        <div class="empty-text">${isArchive ? 'Brak przesyłek w archiwum' : 'Brak przesyłek do wyświetlenia'}</div>
-      `;
-      targetList.appendChild(empty);
-      return;
+    function fmtStatus(st){
+        switch(st){
+            case 'created':    return ['UTWORZONA','pill gray'];
+            case 'sent':       return ['WYSŁANA','pill blue'];
+            case 'in_transit': return ['W DRODZE','pill purple'];
+            case 'received':   return ['OTRZYMANA','pill green'];
+            case 'delivered':  return ['DOSTARCZONA','pill green'];
+            case 'issued':     return ['WYDANA','pill green'];
+            case 'canceled':   return ['ANULOWANA','pill gray'];
+            default:           return [st,'pill gray'];
+        }
     }
 
-    sorted.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'shipment-row-wrapper';
-      row.innerHTML = `
-        <button class="shipment-row" type="button">
-          <strong>${item.id}</strong>
-          <span class="status-badge ${getStatusBadgeClass(item.status)}">${getStatusLabel(item.status)}</span>
-          <span>${item.date.split('-').reverse().join('-')}</span>
-        </button>
-        <button class="info-btn" type="button" aria-label="Szczegóły">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-        </button>
-      `;
-      const rowBtn = row.querySelector('.shipment-row');
-      const infoBtn = row.querySelector('.info-btn');
-      rowBtn.addEventListener('click', () => showDetails(item));
-      infoBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showInfo(item);
-      });
-      targetList.appendChild(row);
-    });
-  }
+    function render(list){
+        listEl.innerHTML = '';
+        if (!list.length){
+            emptyEl.style.display = '';
+            return;
+        }
+        emptyEl.style.display = 'none';
 
-  function switchTab(tabName){
-    const isArchive = tabName === 'archive';
-    
-    // Обновление активной вкладки
-    tabActive.classList.toggle('active', !isArchive);
-    tabArchive.classList.toggle('active', isArchive);
-    
-    // Показать/скрыть списки
-    listEl.classList.toggle('hidden', isArchive);
-    archiveListEl.classList.toggle('hidden', !isArchive);
-    
-    // Перерисовать список
-    renderList(isArchive);
-  }
-
-  tabActive.addEventListener('click', () => switchTab('active'));
-  tabArchive.addEventListener('click', () => switchTab('archive'));
-
-  function renderRoute(item){
-    if(!item.route || !item.route.length){
-      detailRoute.innerHTML = '';
-      return;
-    }
-
-    // Обратный порядок - более новые статусы выше
-    const reversedRoute = [...item.route].reverse();
-
-    const stepsHtml = reversedRoute.map((step, index) => {
-      // Первый элемент (после reverse) - это последний статус, он текущий
-      const isCurrent = index === 0;
-      const badgeClass = getStatusBadgeClass(step.status);
-      return `
-        <div class="route-step ${isCurrent ? 'route-step--current' : ''}">
-          <div class="route-step-marker">
-            <span class="route-step-dot"></span>
-            ${index < reversedRoute.length - 1 ? '<span class="route-step-line"></span>' : ''}
-          </div>
-          <div class="route-step-content">
-            <div class="route-step-title">${step.label}</div>
-            <div class="route-step-meta">${step.date}</div>
-            <div class="route-step-meta">${step.location}</div>
-            <div class="route-step-status">
-              <span class="status-badge ${badgeClass}">${getStatusLabel(step.status)}</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    detailRoute.innerHTML = `
-      <h4 class="route-title">Trasa przesyłki</h4>
-      ${stepsHtml}
+        list.forEach(row => {
+            const [label, cls] = fmtStatus(row.status);
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.innerHTML = `
+      <div>
+        <div style="font-weight:600">${row.parcel_number}</div>
+        <div class="muted">tel. ${row.phone ?? ''}</div>
+      </div>
+      <div><span class="${cls}">${label}</span></div>
+      <div class="muted">${row.created_at?.replace('T',' ') ?? ''}</div>
     `;
-  }
+            item.addEventListener('click', () => openDetails(row.parcel_number));
+            listEl.appendChild(item);
+        });
+    }
 
-  function showDetails(item){
-    detailCode.textContent = item.id;
-    detailStatus.innerHTML = 'Status: <span class="status-badge ' + getStatusBadgeClass(item.status) + '">' + getStatusLabel(item.status) + '</span>';
-    detailDate.textContent = 'Data wysłania: ' + item.date.split('-').reverse().join('-');
-    renderRoute(item);
-    detailsOverlay.classList.remove('hidden');
-    detailsOverlay.setAttribute('aria-hidden', 'false');
-  }
+    async function load(){
+        const q = document.getElementById('q').value.trim();
+        const date = document.getElementById('date').value;
+        const status = document.getElementById('status').value;
+        const url = new URL('/backend/client_list.php', location.origin);
+        if (q) url.searchParams.set('q', q);
+        if (date) url.searchParams.set('date', date);
+        if (status) url.searchParams.set('status', status);
 
-  function hideDetails(){
-    detailsOverlay.classList.add('hidden');
-    detailsOverlay.setAttribute('aria-hidden', 'true');
-  }
+        const res = await fetch(url, {credentials:'same-origin'});
+        const data = await res.json();
+        const list = currentTab === 'active' ? (data.active || []) : (data.archive || []);
+        render(list);
+    }
 
-  function showInfo(item){
-    const formatDate = (dateStr) => {
-      if(!dateStr) return '-';
-      return dateStr.replace(' ', ' ').split('-').reverse().join('-').replace(/(\d{2})-(\d{2})-(\d{4})/, '$1-$2-$3');
-    };
+    async function openDetails(number){
+        details.textContent = 'Ładowanie…';
+        dlg.showModal();
+        try{
+            const url = new URL('/backend/parcel_show.php', location.origin);
+            url.searchParams.set('number', number);
+            const res = await fetch(url, {credentials:'same-origin'});
+            const d = await res.json();
+            if (d.error) throw new Error(d.error);
 
-    infoContent.innerHTML = `
-      <div class="info-section">
-        <h4>Dane podstawowe</h4>
-        <div class="info-row">
-          <span class="info-label">Numer przesyłki:</span>
-          <span class="info-value">${item.id}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Typ paczki:</span>
-          <span class="info-value">${item.parcel}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Telefon:</span>
-          <span class="info-value">${item.phone}</span>
-        </div>
-      </div>
-
-      <div class="info-section">
-        <h4>Nadawca</h4>
-        <div class="info-row">
-          <span class="info-label">Firma:</span>
-          <span class="info-value">${item.sender}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Imię i nazwisko:</span>
-          <span class="info-value">${item.sender_name}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Adres:</span>
-          <span class="info-value">${item.sender_address}</span>
-        </div>
-      </div>
-
-      <div class="info-section">
-        <h4>Szczegóły przesyłki</h4>
-        <div class="info-row">
-          <span class="info-label">Opis:</span>
-          <span class="info-value">${item.description}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Wymiary:</span>
-          <span class="info-value">${item.size}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Waga:</span>
-          <span class="info-value">${item.weight}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Cena:</span>
-          <span class="info-value">${item.price}</span>
-        </div>
-      </div>
-
-      <div class="info-section">
-        <h4>Statusy czasowe</h4>
-        <div class="info-row">
-          <span class="info-label">Utworzona:</span>
-          <span class="info-value">${formatDate(item.created_at)}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Wysłana:</span>
-          <span class="info-value">${formatDate(item.sent_at)}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Otrzymana:</span>
-          <span class="info-value">${formatDate(item.received_at)}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Wydana:</span>
-          <span class="info-value">${formatDate(item.issued_at)}</span>
-        </div>
+            details.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><b>Numer:</b> ${d.parcel_number}</div>
+        <div><b>Telefon:</b> ${d.phone ?? ''}</div>
+        <div><b>Nadawca:</b> ${d.sender_name ?? ''}</div>
+        <div><b>Adres:</b> ${d.sender_address ?? ''}</div>
+        <div style="grid-column:1/-1"><b>Opis:</b> ${d.description ?? ''}</div>
+        <div><b>Waga:</b> ${d.weight ?? ''}</div>
+        <div><b>Wymiary:</b> ${d.size ?? ''}</div>
+        <div><b>Cena:</b> ${d.price ?? ''}</div>
+        <hr style="grid-column:1/-1;border:none;border-top:1px solid #eee">
+        <div><b>Utworzona:</b> ${d.created_at ?? '-'}</div>
+        <div><b>Wysłana:</b> ${d.sent_at ?? '-'}</div>
+        <div><b>Otrzymana w punkcie:</b> ${d.received_at ?? '-'}</div>
+        <div><b>Wydana/Dostarczona:</b> ${d.issued_at ?? '-'}</div>
       </div>
     `;
-    infoOverlay.classList.remove('hidden');
-    infoOverlay.setAttribute('aria-hidden', 'false');
-  }
-
-  function hideInfo(){
-    infoOverlay.classList.add('hidden');
-    infoOverlay.setAttribute('aria-hidden', 'true');
-  }
-
-  closeDetailsBtn.addEventListener('click', hideDetails);
-  detailsOverlay.addEventListener('click', (e) => {
-    if(e.target === detailsOverlay){
-      hideDetails();
+        }catch(e){
+            details.textContent = 'Błąd ładowania szczegółów.';
+        }
     }
-  });
 
-  closeInfoBtn.addEventListener('click', hideInfo);
-  infoOverlay.addEventListener('click', (e) => {
-    if(e.target === infoOverlay){
-      hideInfo();
-    }
-  });
+    document.getElementById('apply').addEventListener('click', load);
+    document.getElementById('reset').addEventListener('click', () => {
+        document.getElementById('q').value = '';
+        document.getElementById('date').value = '';
+        document.getElementById('status').value = '';
+        load();
+    });
+    tabs.forEach(t => t.addEventListener('click', () => {
+        tabs.forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        currentTab = t.dataset.tab;
+        load();
+    }));
 
-  function updateFilter(key, value){
-    filters[key] = value;
-    const isArchive = tabArchive.classList.contains('active');
-    renderList(isArchive);
-  }
-
-  filterId.addEventListener('input', e => updateFilter('id', e.target.value));
-  filterDate.addEventListener('input', e => updateFilter('date', e.target.value));
-  filterStatus.addEventListener('change', e => updateFilter('status', e.target.value));
-
-  renderList(false); // Начальная загрузка активных посылок
+    // первый рендер
+    load();
 </script>
 </body>
 </html>
-
