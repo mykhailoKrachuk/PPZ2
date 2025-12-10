@@ -636,10 +636,50 @@ input::placeholder {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 .shipments-card h2{
+<<<<<<< HEAD
   margin:0 0 16px;
   font-size: 26px;
+=======
+  margin:0 0 20px;
+  font-size: 24px;
+>>>>>>> frontend
   font-weight: 700;
   color: #1a1a1a;
+}
+
+/* Вкладки */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+  border: none;
+  background: transparent;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+  color: #667eea;
+}
+
+.tab-btn.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+.hidden {
+  display: none !important;
 }
 .shipments-list{
   flex:1;
@@ -650,6 +690,23 @@ input::placeholder {
   overflow:auto;
   padding-right:8px;
 }
+.shipment-row-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.shipment-row-wrapper:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e2e8f0;
+}
+
 .shipment-row{
   border:none;
   background: #ffffff;
@@ -667,15 +724,7 @@ input::placeholder {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid #e0e7ff;
   position: relative;
-}
-.shipment-row:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: #e2e8f0;
+  flex: 1;
 }
 .shipment-row strong{ 
   font-size: 17px; 
@@ -689,6 +738,32 @@ input::placeholder {
   transform: translateY(-3px) scale(1.01);
   box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: #667eea;
+}
+
+.info-btn {
+  border: none;
+  background: #f3f4f6;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #667eea;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.info-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.info-btn:hover {
+  background: #667eea;
+  color: #ffffff;
+  transform: scale(1.05);
 }
 .empty{
   margin: 40px 0;
@@ -771,8 +846,15 @@ input::placeholder {
   padding: 32px 40px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width:min(420px, 90vw);
+  max-height: 90vh;
+  overflow-y: auto;
   position:relative;
   border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.details-card.info-card {
+  width: min(600px, 90vw);
+  max-height: 85vh;
 }
 .details-card h3{
   margin:0 0 16px;
@@ -877,6 +959,70 @@ input::placeholder {
   margin-top: 6px;
 }
 
+/* Стили для модального окна с информацией */
+.info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-section h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.info-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #1a1a1a;
+  text-align: right;
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .info-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .info-value {
+    text-align: left;
+  }
+  .shipment-row-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .info-btn {
+    align-self: flex-end;
+    margin-top: -40px;
+    margin-right: 8px;
+  }
+}
+
 .route-step--current .route-step-dot {
   background: #4f46e5;
   border-color: #4f46e5;
@@ -933,7 +1079,7 @@ input::placeholder {
   background: #ffffff;
   padding: 20px 24px;
   display:flex;
-  justify-content:space-between;
+  justify-content:center;
   align-items: center;
   font-size: 16px;
   cursor:pointer;
@@ -942,6 +1088,7 @@ input::placeholder {
   border: 1px solid #e0e7ff;
   color: #1a1a1a;
   position: relative;
+  width: 100%;
 }
 .delivery-row:not(:last-child)::after {
   content: '';
@@ -1277,6 +1424,44 @@ input::placeholder {
 .modal-form textarea{
   resize:vertical;
   min-height: 100px;
+}
+
+/* Сообщение об успехе */
+.success-message {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #065f46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 auto 20px;
+}
+
+.success-message h3 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.success-message p {
+  margin: 0 0 24px;
+  font-size: 15px;
+  color: #6b7280;
+}
+
+.input.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
 }
 .worker-modal{
   background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%);

@@ -44,11 +44,11 @@ $user = $_SESSION['user'];
 
 <script>
   const deliveries = [
-    { id:'MFINBDJK87', location:'Katowice' },
-    { id:'AMSDNA1192', location:'Poznań' },
-    { id:'HDJALAMA78', location:'Gdańsk' },
-    { id:'HSKNBDJK87', location:'Wrocław' },
-    { id:'HKBYHSK227', location:'Warszawa' }
+    { id:'MFINBDJK87' },
+    { id:'AMSDNA1192' },
+    { id:'HDJALAMA78' },
+    { id:'HSKNBDJK87' },
+    { id:'HKBYHSK227' }
   ];
 
   const listContainer = document.getElementById('deliveryList');
@@ -74,7 +74,6 @@ $user = $_SESSION['user'];
       row.className = 'delivery-row';
       row.innerHTML = `
         <span>${item.id}</span>
-        <strong>${item.location}</strong>
       `;
       row.addEventListener('click', () => selectDelivery(item.id, row));
       listContainer.appendChild(row);

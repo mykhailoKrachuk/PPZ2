@@ -109,7 +109,23 @@ $user = $_SESSION['user'];
     <p id="issueCode" class="details-code">Wybierz przesyłkę</p>
     <p id="issueStatus"></p>
     <p id="issueDate"></p>
+    <div id="codeInputContainer" class="form-group hidden">
+      <label for="nadaniaCode">Kod nadania</label>
+      <input id="nadaniaCode" type="text" placeholder="Wpisz kod nadania" class="input">
+    </div>
     <button id="issueBtn" class="worker-btn full" type="button">wydaj</button>
+  </div>
+</div>
+
+<div id="successOverlay" class="modal-overlay hidden" aria-hidden="true">
+  <div class="modal-card worker-modal" role="dialog" aria-modal="true">
+    <button class="close-btn" type="button" data-close="successOverlay" aria-label="Zamknij okno">&times;</button>
+    <div class="success-message">
+      <div class="success-icon">✓</div>
+      <h3>Przesyłka wydana</h3>
+      <p>Na Twój email został wysłany kod.</p>
+      <button class="worker-btn full" type="button" data-close="successOverlay">OK</button>
+    </div>
   </div>
 </div>
 
@@ -117,7 +133,7 @@ $user = $_SESSION['user'];
   const shipments = [
     { id:'MFINBDJK87', destination:'Katowice', status:'Utworzona', date:'2025-10-24', receiverFirst:'Anna', receiverLast:'Nowak', address:'ul. Leśna 10, Katowice', phone:'+48 500 200 111', note:'Pilne' },
     { id:'AMSDNA1192', destination:'Poznań', status:'W drodze', date:'2025-10-20', receiverFirst:'Marek', receiverLast:'Kowalski', address:'ul. Wiślana 3, Poznań', phone:'+48 501 111 222', note:'' },
-    { id:'HDJALAMA78', destination:'Gdańsk', status:'Przyjęta', date:'2025-10-23', receiverFirst:'Julia', receiverLast:'Mazur', address:'ul. Morska 7, Gdańsk', phone:'+48 502 333 444', note:'Delikatna zawartość' },
+    { id:'HDJALAMA78', destination:'Gdańsk', status:'Otrzymana', date:'2025-10-23', receiverFirst:'Julia', receiverLast:'Mazur', address:'ul. Morska 7, Gdańsk', phone:'+48 502 333 444', note:'Delikatna zawartość' },
     { id:'HSKNBDJK87', destination:'Wrocław', status:'Magazyn', date:'2025-10-19', receiverFirst:'Kamil', receiverLast:'Polański', address:'ul. Lipowa 17, Wrocław', phone:'+48 503 555 666', note:'' },
     { id:'HKBYHSK227', destination:'Warszawa', status:'Gotowa do wysyłki', date:'2025-10-21', receiverFirst:'Olga', receiverLast:'Zielińska', address:'ul. Długa 4, Warszawa', phone:'+48 504 777 888', note:'Odbiór osobisty' }
   ];
@@ -136,6 +152,9 @@ $user = $_SESSION['user'];
   const issueCode = document.getElementById('issueCode');
   const issueStatus = document.getElementById('issueStatus');
   const issueDate = document.getElementById('issueDate');
+  const codeInputContainer = document.getElementById('codeInputContainer');
+  const nadaniaCodeInput = document.getElementById('nadaniaCode');
+  const successOverlay = document.getElementById('successOverlay');
 
   document.getElementById('searchNumber').addEventListener('input', e => { filters.number = e.target.value.trim().toLowerCase(); renderList(); });
   document.getElementById('searchFirst').addEventListener('input', e => { filters.first = e.target.value.trim().toLowerCase(); renderList(); });
@@ -197,7 +216,21 @@ $user = $_SESSION['user'];
   createBtn.addEventListener('click', () => openOverlay(createOverlay));
   detailsBtn.addEventListener('click', () => {
     if(!selectedId){
-      alert('Wybierz przesyłkę z listy.');
+      // Показываем модальное окно вместо alert
+      const errorOverlay = document.createElement('div');
+      errorOverlay.className = 'modal-overlay';
+      errorOverlay.innerHTML = `
+        <div class="modal-card worker-modal">
+          <button class="close-btn" type="button" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+          <div class="success-message">
+            <div class="success-icon" style="color: #ef4444;">!</div>
+            <h3>Błąd</h3>
+            <p>Wybierz przesyłkę z listy.</p>
+            <button class="worker-btn full" type="button" onclick="this.closest('.modal-overlay').remove()">OK</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(errorOverlay);
       return;
     }
     const shipment = shipments.find(item => item.id === selectedId);
@@ -208,6 +241,7 @@ $user = $_SESSION['user'];
         'Dostarczona': 'dostarczona',
         'Wydana klientowi': 'wydana-klientowi',
         'Przyjęta': 'przyjeta',
+        'Otrzymana': 'dostarczona',
         'Magazyn': 'magazyn',
         'Gotowa do wysyłki': 'gotowa-do-wysylki',
         'Wysłana': 'wyslana'
@@ -217,13 +251,39 @@ $user = $_SESSION['user'];
     issueCode.textContent = shipment.id;
     issueStatus.innerHTML = 'Status: <span class="status-badge ' + getStatusBadgeClass(shipment.status) + '">' + shipment.status + '</span>';
     issueDate.textContent = 'Data wysłania: ' + shipment.date.split('-').reverse().join('-');
+    
+    // Показываем поле для кода надання, если статус "Otrzymana" или "Przyjęta"
+    if(shipment.status === 'Otrzymana' || shipment.status === 'Przyjęta'){
+      codeInputContainer.classList.remove('hidden');
+      nadaniaCodeInput.value = '';
+    } else {
+      codeInputContainer.classList.add('hidden');
+    }
+    
     openOverlay(issueOverlay);
   });
 
   issueBtn.addEventListener('click', () => {
     if(!selectedId){ return; }
-    alert('Przesyłka wydana: ' + selectedId);
+    const shipment = shipments.find(item => item.id === selectedId);
+    
+    // Проверка кода надання, если требуется
+    if(shipment.status === 'Otrzymana' || shipment.status === 'Przyjęta'){
+      const code = nadaniaCodeInput.value.trim();
+      if(!code){
+        nadaniaCodeInput.classList.add('error');
+        nadaniaCodeInput.focus();
+        return;
+      }
+      nadaniaCodeInput.classList.remove('error');
+    }
+    
+    // Закрываем окно выдачи и показываем сообщение об успехе
     closeOverlay(issueOverlay);
+    openOverlay(successOverlay);
+    
+    // Обновляем статус посылки
+    shipment.status = 'Wydana';
   });
 
   createForm.addEventListener('submit', e => {
@@ -255,7 +315,13 @@ $user = $_SESSION['user'];
   document.querySelectorAll('[data-close]').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = document.getElementById(btn.dataset.close);
-      if(target){ closeOverlay(target); }
+      if(target){ 
+        closeOverlay(target);
+        // Обновляем список после закрытия окна успеха
+        if(target.id === 'successOverlay'){
+          renderList();
+        }
+      }
     });
   });
 
