@@ -139,7 +139,7 @@
     e.preventDefault();
     const trackingInput = document.getElementById('trackingNumber');
     const trackingError = document.getElementById('trackingError');
-    const trackingNumber = trackingInput.value.trim().toUpperCase();
+    const trackingNumber = trackingInput.value.trim();
     
     // Валидация
     trackingInput.classList.remove('error');
@@ -153,56 +153,101 @@
       return;
     }
 
-    const shipment = sampleShipments.find(s => s.id === trackingNumber);
-    
-    if(shipment){
-      // Функция для получения класса бейджа статуса
-      function getStatusBadgeClass(status) {
-        const statusMap = {
-          'Utworzona': 'utworzona',
-          'W drodze': 'w-drodze',
-          'Dostarczona': 'dostarczona',
-          'Wydana klientowi': 'wydana-klientowi',
-          'Przyjęta': 'przyjeta',
-          'Magazyn': 'magazyn',
-          'Gotowa do wysyłki': 'gotowa-do-wysylki',
-          'Wysłana': 'wyslana'
-        };
-        return statusMap[status] || 'utworzona';
-      }
-      
-      let historyHtml = '<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;"><strong>Historia przesyłki:</strong><ul style="margin-top: 12px; padding-left: 20px;">';
-      shipment.history.forEach(h => {
-        historyHtml += `<li style="margin-bottom: 8px; line-height: 1.6;"><strong>${h.date}</strong> - <span class="status-badge ${getStatusBadgeClass(h.status)}">${h.status}</span> (${h.location})</li>`;
-      });
-      historyHtml += '</ul></div>';
-      
-      resultContent.innerHTML = `
-        <h3 style="margin-top: 0; margin-bottom: 16px; text-align: left;">Numer przesyłki: <strong style="font-size: 20px;">${shipment.id}</strong></h3>
-        <div style="margin-bottom: 16px; text-align: left;">
-          <span class="status-badge ${getStatusBadgeClass(shipment.status)}">${shipment.status}</span>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-          <p><strong>Data wysłania:</strong><br>${shipment.date.split('-').reverse().join('-')}</p>
-          <p><strong>Miasto docelowe:</strong><br>${shipment.destination}</p>
-        </div>
-        ${historyHtml}
-        <div style="margin-top: 20px; text-align: center;">
-          <a href="login.html" class="link-btn" style="text-decoration: none; display: inline-block;">Zaloguj się, aby otrzymywać powiadomienia</a>
-        </div>
-      `;
-      searchResult.style.display = 'block';
-    } else {
-      resultContent.innerHTML = `
-        <div style="text-align: center; padding: 20px;">
-          <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
-          <p style="color: #d32f2f; margin: 0; font-size: 18px;"><strong>Nie znaleziono przesyłki</strong></p>
-          <p style="margin-top: 12px; margin-bottom: 8px;">Numer: <strong>${trackingNumber}</strong></p>
-          <p style="margin-top: 12px; margin-bottom: 0; color: #666;">Sprawdź numer przesyłki i spróbuj ponownie. Jeśli problem się powtarza, <a href="contact.html" style="color: #6f3b39;">skontaktuj się z nami</a>.</p>
-        </div>
-      `;
-      searchResult.style.display = 'block';
+    // Функция для получения класса бейджа статуса
+    function getStatusBadgeClass(status) {
+      const statusMap = {
+        'Utworzona': 'utworzona',
+        'W drodze': 'w-drodze',
+        'Dostarczona': 'dostarczona',
+        'Wydana klientowi': 'wydana-klientowi',
+        'Otrzymana': 'otrzymana',
+        'Przyjęta': 'przyjeta',
+        'Magazyn': 'magazyn',
+        'Gotowa do wysyłki': 'gotowa-do-wysylki',
+        'Wysłana': 'wyslana',
+        'Anulowana': 'anulowana'
+      };
+      return statusMap[status] || 'utworzona';
     }
+
+    // Показываем загрузку
+    resultContent.innerHTML = `
+      <div style="text-align: center; padding: 20px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+        <p>Szukanie przesyłki...</p>
+      </div>
+    `;
+    searchResult.style.display = 'block';
+
+    // Запрос к API
+    fetch(`/backend/parcel_search.php?number=${encodeURIComponent(trackingNumber)}`)
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.error || 'Błąd serwera');
+          });
+        }
+        return response.json();
+      })
+      .then(shipment => {
+        // Формируем историю
+        let historyHtml = '';
+        if (shipment.history && shipment.history.length > 0) {
+          historyHtml = '<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e0e0e0;"><strong>Historia przesyłki:</strong><ul style="margin-top: 12px; padding-left: 20px;">';
+          shipment.history.forEach(h => {
+            historyHtml += `<li style="margin-bottom: 8px; line-height: 1.6;"><strong>${h.date}</strong> - <span class="status-badge ${getStatusBadgeClass(h.status)}">${h.status}</span> (${h.location})</li>`;
+          });
+          historyHtml += '</ul></div>';
+        }
+        
+        // Формируем детали
+        let detailsHtml = '';
+        if (shipment.details) {
+          detailsHtml = '<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e0e0e0;">';
+          if (shipment.details.sender_name) {
+            detailsHtml += `<p><strong>Odbiorca:</strong> ${shipment.details.sender_name}</p>`;
+          }
+          if (shipment.details.description) {
+            detailsHtml += `<p><strong>Opis:</strong> ${shipment.details.description}</p>`;
+          }
+          if (shipment.details.size) {
+            detailsHtml += `<p><strong>Rozmiar:</strong> ${shipment.details.size}</p>`;
+          }
+          if (shipment.details.weight) {
+            detailsHtml += `<p><strong>Waga:</strong> ${shipment.details.weight}</p>`;
+          }
+          if (shipment.details.price) {
+            detailsHtml += `<p><strong>Cena:</strong> ${shipment.details.price} PLN</p>`;
+          }
+          detailsHtml += '</div>';
+        }
+        
+        resultContent.innerHTML = `
+          <h3 style="margin-top: 0; margin-bottom: 16px; text-align: left;">Numer przesyłki: <strong style="font-size: 20px;">${shipment.id}</strong></h3>
+          <div style="margin-bottom: 16px; text-align: left;">
+            <span class="status-badge ${getStatusBadgeClass(shipment.status)}">${shipment.status}</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <p><strong>Data utworzenia:</strong><br>${shipment.date.split('-').reverse().join('-')}</p>
+            <p><strong>Adres odbiorcy:</strong><br>${shipment.destination}</p>
+          </div>
+          ${detailsHtml}
+          ${historyHtml}
+          <div style="margin-top: 20px; text-align: center;">
+            <a href="login.html" class="link-btn" style="text-decoration: none; display: inline-block;">Zaloguj się, aby otrzymywać powiadomienia</a>
+          </div>
+        `;
+      })
+      .catch(error => {
+        resultContent.innerHTML = `
+          <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">📦</div>
+            <p style="color: #d32f2f; margin: 0; font-size: 18px;"><strong>Nie znaleziono przesyłki</strong></p>
+            <p style="margin-top: 12px; margin-bottom: 8px;">Numer: <strong>${trackingNumber}</strong></p>
+            <p style="margin-top: 12px; margin-bottom: 0; color: #666;">${error.message || 'Sprawdź numer przesyłki i spróbuj ponownie. Jeśli problem się powtarza, <a href="contact.html" style="color: #6f3b39;">skontaktuj się z nami</a>.'}</p>
+          </div>
+        `;
+      });
   });
 </script>
 </body>

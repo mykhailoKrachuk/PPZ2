@@ -636,13 +636,8 @@ input::placeholder {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 .shipments-card h2{
-<<<<<<< HEAD
   margin:0 0 16px;
   font-size: 26px;
-=======
-  margin:0 0 20px;
-  font-size: 24px;
->>>>>>> frontend
   font-weight: 700;
   color: #1a1a1a;
 }
@@ -1355,6 +1350,11 @@ input::placeholder {
   position:relative;
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
+.modal-card.worker-modal {
+  width:min(700px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+}
 .details-card h3,
 .modal-card h2{
   margin:0 0 16px;
@@ -1399,6 +1399,16 @@ input::placeholder {
 }
 .modal-form .form-group {
   margin-bottom: 0;
+}
+.modal-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 600px) {
+  .modal-form .form-row {
+    grid-template-columns: 1fr;
+  }
 }
 .modal-form label{
   font-weight: 600;

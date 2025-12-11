@@ -86,7 +86,34 @@ $user = $_SESSION['user'];
 </div>
 
 <script>
-  // Prosta \"baza danych\" przesyłek z 4 statusami i pełnymi danymi
+  // Загрузка посылок из базы данных
+  let shipments = [];
+  
+  // Загружаем посылки при загрузке страницы
+  fetch('/backend/parcel_list.php')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Błąd ładowania przesyłek');
+      }
+      return response.json();
+    })
+    .then(data => {
+      shipments = data;
+      renderList(false); // Начальная загрузка активных посылок
+    })
+    .catch(error => {
+      console.error('Błąd:', error);
+      const listEl = document.getElementById('shipmentList');
+      listEl.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">⚠️</div>
+          <div class="empty-text">Błąd ładowania przesyłek. Odśwież stronę.</div>
+        </div>
+      `;
+    });
+  
+  // Старый hardcoded массив (удалён, теперь загружается из API)
+  /*
   const shipments = [
     { 
       id:'NPX66UW2GP', 
@@ -201,6 +228,7 @@ $user = $_SESSION['user'];
       ]
     }
   ];
+  */
 
   const listEl = document.getElementById('shipmentList');
   const archiveListEl = document.getElementById('archiveList');
@@ -382,7 +410,15 @@ $user = $_SESSION['user'];
   function showInfo(item){
     const formatDate = (dateStr) => {
       if(!dateStr) return '-';
-      return dateStr.replace(' ', ' ').split('-').reverse().join('-').replace(/(\d{2})-(\d{2})-(\d{4})/, '$1-$2-$3');
+      // Формат: YYYY-MM-DD HH:mm -> DD-MM-YYYY HH:mm
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '-';
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${day}-${month}-${year} ${hours}:${minutes}`;
     };
 
     infoContent.innerHTML = `
@@ -392,29 +428,21 @@ $user = $_SESSION['user'];
           <span class="info-label">Numer przesyłki:</span>
           <span class="info-value">${item.id}</span>
         </div>
-        <div class="info-row">
-          <span class="info-label">Typ paczki:</span>
-          <span class="info-value">${item.parcel}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Telefon:</span>
-          <span class="info-value">${item.phone}</span>
-        </div>
       </div>
 
       <div class="info-section">
-        <h4>Nadawca</h4>
-        <div class="info-row">
-          <span class="info-label">Firma:</span>
-          <span class="info-value">${item.sender}</span>
-        </div>
+        <h4>Odbiorca</h4>
         <div class="info-row">
           <span class="info-label">Imię i nazwisko:</span>
-          <span class="info-value">${item.sender_name}</span>
+          <span class="info-value">${item.sender_name || '-'}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Adres:</span>
-          <span class="info-value">${item.sender_address}</span>
+          <span class="info-value">${item.sender_address || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Telefon:</span>
+          <span class="info-value">${item.phone || '-'}</span>
         </div>
       </div>
 
@@ -422,19 +450,19 @@ $user = $_SESSION['user'];
         <h4>Szczegóły przesyłki</h4>
         <div class="info-row">
           <span class="info-label">Opis:</span>
-          <span class="info-value">${item.description}</span>
+          <span class="info-value">${item.description || '-'}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Wymiary:</span>
-          <span class="info-value">${item.size}</span>
+          <span class="info-value">${item.size || '-'}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Waga:</span>
-          <span class="info-value">${item.weight}</span>
+          <span class="info-value">${item.weight || '-'}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Cena:</span>
-          <span class="info-value">${item.price}</span>
+          <span class="info-value">${item.price || '-'}</span>
         </div>
       </div>
 
@@ -491,7 +519,7 @@ $user = $_SESSION['user'];
   filterDate.addEventListener('input', e => updateFilter('date', e.target.value));
   filterStatus.addEventListener('change', e => updateFilter('status', e.target.value));
 
-  renderList(false); // Начальная загрузка активных посылок
+  // renderList(false) вызывается после загрузки данных из API
 </script>
 </body>
 </html>

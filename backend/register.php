@@ -31,7 +31,7 @@ try {
         header('Location: /Salfetka/register.html?err=exists'); exit;
     }
 
-    // 2.3 Хэш пароля (bcrypt). Совместим с password_verify() в твоём login.php
+    
     $hash = password_hash($data['password'], PASSWORD_BCRYPT);
 
     // 2.4 Вставка пользователя (роль — user)

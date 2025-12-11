@@ -77,9 +77,16 @@ $user = $_SESSION['user'];
     <button class="close-btn" type="button" data-close="createOverlay" aria-label="Zamknij okno">&times;</button>
     <h2 id="createHeading">Tworzenie Przesyłki</h2>
     <form id="createForm" class="modal-form">
-      <div class="form-group">
-        <label for="receiverName" class="required">Imię i nazwisko odbiorcy</label>
-        <input id="receiverName" type="text" required>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="receiverName" class="required">Imię i nazwisko odbiorcy</label>
+          <input id="receiverName" type="text" required>
+        </div>
+
+        <div class="form-group">
+          <label for="receiverPhone" class="required">Numer Telefonu</label>
+          <input id="receiverPhone" type="tel" required>
+        </div>
       </div>
 
       <div class="form-group">
@@ -88,13 +95,25 @@ $user = $_SESSION['user'];
       </div>
 
       <div class="form-group">
-        <label for="receiverPhone" class="required">Numer Telefonu</label>
-        <input id="receiverPhone" type="tel" required>
+        <label for="packageNote">Opis</label>
+        <textarea id="packageNote" rows="2"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="packageSize">Wymiary (np. 30x20x15 cm)</label>
+          <input id="packageSize" type="text" placeholder="30x20x15 cm">
+        </div>
+
+        <div class="form-group">
+          <label for="packageWeight">Waga (kg)</label>
+          <input id="packageWeight" type="number" step="0.01" min="0" placeholder="0.5">
+        </div>
       </div>
 
       <div class="form-group">
-        <label for="packageNote">Opis</label>
-        <textarea id="packageNote" rows="2"></textarea>
+        <label for="packagePrice">Cena (PLN)</label>
+        <input id="packagePrice" type="number" step="0.01" min="0" placeholder="249.99">
       </div>
 
       <button class="worker-btn full" type="submit">Utwórz</button>
@@ -110,10 +129,11 @@ $user = $_SESSION['user'];
     <p id="issueStatus"></p>
     <p id="issueDate"></p>
     <div id="codeInputContainer" class="form-group hidden">
-      <label for="nadaniaCode">Kod nadania</label>
-      <input id="nadaniaCode" type="text" placeholder="Wpisz kod nadania" class="input">
+      <label for="nadaniaCode">Kod 6-cyfrowy</label>
+      <input id="nadaniaCode" type="text" placeholder="Wpisz 6-cyfrowy kod" class="input" maxlength="6" pattern="[0-9]{6}">
+      <small style="color: #666; font-size: 12px; margin-top: 4px; display: block;">Wprowadź 6-cyfrowy kod, aby odblokować przycisk wydania</small>
     </div>
-    <button id="issueBtn" class="worker-btn full" type="button">wydaj</button>
+    <button id="issueBtn" class="worker-btn full" type="button" disabled>wydaj</button>
   </div>
 </div>
 
@@ -123,20 +143,42 @@ $user = $_SESSION['user'];
     <div class="success-message">
       <div class="success-icon">✓</div>
       <h3>Przesyłka wydana</h3>
-      <p>Na Twój email został wysłany kod.</p>
       <button class="worker-btn full" type="button" data-close="successOverlay">OK</button>
     </div>
   </div>
 </div>
 
 <script>
-  const shipments = [
-    { id:'MFINBDJK87', destination:'Katowice', status:'Utworzona', date:'2025-10-24', receiverFirst:'Anna', receiverLast:'Nowak', address:'ul. Leśna 10, Katowice', phone:'+48 500 200 111', note:'Pilne' },
-    { id:'AMSDNA1192', destination:'Poznań', status:'W drodze', date:'2025-10-20', receiverFirst:'Marek', receiverLast:'Kowalski', address:'ul. Wiślana 3, Poznań', phone:'+48 501 111 222', note:'' },
-    { id:'HDJALAMA78', destination:'Gdańsk', status:'Otrzymana', date:'2025-10-23', receiverFirst:'Julia', receiverLast:'Mazur', address:'ul. Morska 7, Gdańsk', phone:'+48 502 333 444', note:'Delikatna zawartość' },
-    { id:'HSKNBDJK87', destination:'Wrocław', status:'Magazyn', date:'2025-10-19', receiverFirst:'Kamil', receiverLast:'Polański', address:'ul. Lipowa 17, Wrocław', phone:'+48 503 555 666', note:'' },
-    { id:'HKBYHSK227', destination:'Warszawa', status:'Gotowa do wysyłki', date:'2025-10-21', receiverFirst:'Olga', receiverLast:'Zielińska', address:'ul. Długa 4, Warszawa', phone:'+48 504 777 888', note:'Odbiór osobisty' }
-  ];
+  // Загрузка посылок z базы данных
+  let shipments = [];
+  
+  // Загружаем посылки при загрузке strony
+  function loadShipments() {
+    fetch('/backend/parcel_worker_list.php')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Błąd ładowania przesyłek');
+        }
+        return response.json();
+      })
+      .then(data => {
+        shipments = data;
+        renderList();
+        updateDestinationSelect();
+      })
+      .catch(error => {
+        console.error('Błąd:', error);
+        const listEl = document.getElementById('workerList');
+        listEl.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">⚠️</div>
+            <div class="empty-text">Błąd ładowania przesyłek. Odśwież stronę.</div>
+          </div>
+        `;
+      });
+  }
+  
+  loadShipments();
 
   const filters = { number:'', first:'', last:'', destination:'' };
   let selectedId = '';
@@ -167,6 +209,17 @@ $user = $_SESSION['user'];
     const lastOk = !filters.last || item.receiverLast.toLowerCase().includes(filters.last);
     const destOk = !filters.destination || item.destination === filters.destination;
     return numberOk && firstOk && lastOk && destOk;
+  }
+
+  function updateDestinationSelect() {
+    const destinations = [...new Set(shipments.map(s => s.destination))].sort();
+    destinationSelect.innerHTML = '<option value="">Wszystkie miasta</option>';
+    destinations.forEach(dest => {
+      const option = document.createElement('option');
+      option.value = dest;
+      option.textContent = dest;
+      destinationSelect.appendChild(option);
+    });
   }
 
   function renderList(){
@@ -216,7 +269,6 @@ $user = $_SESSION['user'];
   createBtn.addEventListener('click', () => openOverlay(createOverlay));
   detailsBtn.addEventListener('click', () => {
     if(!selectedId){
-      // Показываем модальное окно вместо alert
       const errorOverlay = document.createElement('div');
       errorOverlay.className = 'modal-overlay';
       errorOverlay.innerHTML = `
@@ -234,6 +286,8 @@ $user = $_SESSION['user'];
       return;
     }
     const shipment = shipments.find(item => item.id === selectedId);
+    if (!shipment) return;
+    
     function getStatusBadgeClass(status) {
       const statusMap = {
         'Utworzona': 'utworzona',
@@ -248,61 +302,141 @@ $user = $_SESSION['user'];
       };
       return statusMap[status] || 'utworzona';
     }
+    
     issueCode.textContent = shipment.id;
     issueStatus.innerHTML = 'Status: <span class="status-badge ' + getStatusBadgeClass(shipment.status) + '">' + shipment.status + '</span>';
-    issueDate.textContent = 'Data wysłania: ' + shipment.date.split('-').reverse().join('-');
+    issueDate.textContent = 'Data otrzymania: ' + shipment.date.split('-').reverse().join('-');
     
-    // Показываем поле для кода надання, если статус "Otrzymana" или "Przyjęta"
-    if(shipment.status === 'Otrzymana' || shipment.status === 'Przyjęta'){
-      codeInputContainer.classList.remove('hidden');
-      nadaniaCodeInput.value = '';
-    } else {
-      codeInputContainer.classList.add('hidden');
-    }
+    // Показываем поле для кода и блокируем кнопку
+    codeInputContainer.classList.remove('hidden');
+    nadaniaCodeInput.value = '';
+    nadaniaCodeInput.classList.remove('error');
+    issueBtn.disabled = true;
+    
+    // Валидация кода при вводе
+    nadaniaCodeInput.oninput = function() {
+      const code = this.value.trim();
+      if (code.length === 6 && /^\d{6}$/.test(code)) {
+        this.classList.remove('error');
+        issueBtn.disabled = false;
+      } else {
+        this.classList.add('error');
+        issueBtn.disabled = true;
+      }
+    };
     
     openOverlay(issueOverlay);
   });
 
   issueBtn.addEventListener('click', () => {
-    if(!selectedId){ return; }
-    const shipment = shipments.find(item => item.id === selectedId);
+    if(!selectedId || issueBtn.disabled){ return; }
     
-    // Проверка кода надання, если требуется
-    if(shipment.status === 'Otrzymana' || shipment.status === 'Przyjęta'){
-      const code = nadaniaCodeInput.value.trim();
-      if(!code){
-        nadaniaCodeInput.classList.add('error');
-        nadaniaCodeInput.focus();
-        return;
-      }
-      nadaniaCodeInput.classList.remove('error');
+    const shipment = shipments.find(item => item.id === selectedId);
+    if (!shipment) return;
+    
+    const code = nadaniaCodeInput.value.trim();
+    if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+      nadaniaCodeInput.classList.add('error');
+      nadaniaCodeInput.focus();
+      return;
     }
     
-    // Закрываем окно выдачи и показываем сообщение об успехе
-    closeOverlay(issueOverlay);
-    openOverlay(successOverlay);
+    // Отправляем запрос на сервер
+    issueBtn.disabled = true;
+    issueBtn.textContent = 'Wydawanie...';
     
-    // Обновляем статус посылки
-    shipment.status = 'Wydana';
+    const formData = new FormData();
+    formData.append('parcel_number', shipment.id);
+    formData.append('code', code);
+    
+    fetch('/backend/parcel_issue.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert('Błąd: ' + data.error);
+          issueBtn.disabled = false;
+          issueBtn.textContent = 'wydaj';
+          return;
+        }
+        
+        // Успешно - закрываем окно и показываем сообщение
+        closeOverlay(issueOverlay);
+        openOverlay(successOverlay);
+        
+        // Обновляем список посылок
+        loadShipments();
+        selectedId = '';
+      })
+      .catch(error => {
+        console.error('Błąd:', error);
+        alert('Błąd połączenia z serwerem');
+        issueBtn.disabled = false;
+        issueBtn.textContent = 'wydaj';
+      });
   });
 
   createForm.addEventListener('submit', e => {
     e.preventDefault();
-    const newShipment = {
-      id: 'NP' + Math.random().toString(36).slice(2, 8).toUpperCase(),
-      destination: filters.destination || 'Katowice',
-      status: 'Utworzona',
-      date: new Date().toISOString().split('T')[0],
-      receiverFirst: document.getElementById('receiverName').value.split(' ')[0] || 'Nowy',
-      receiverLast: document.getElementById('receiverName').value.split(' ')[1] || 'Klient',
-      address: document.getElementById('receiverAddress').value,
-      phone: document.getElementById('receiverPhone').value,
-      note: document.getElementById('packageNote').value || ''
-    };
-    shipments.unshift(newShipment);
-    e.target.reset();
-    closeOverlay(createOverlay);
-    renderList();
+    
+    const formData = new FormData();
+    formData.append('receiver_name', document.getElementById('receiverName').value.trim());
+    formData.append('receiver_address', document.getElementById('receiverAddress').value.trim());
+    formData.append('receiver_phone', document.getElementById('receiverPhone').value.trim());
+    formData.append('description', document.getElementById('packageNote').value.trim());
+    formData.append('size', document.getElementById('packageSize').value.trim());
+    formData.append('weight', document.getElementById('packageWeight').value.trim());
+    formData.append('price', document.getElementById('packagePrice').value.trim());
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Tworzenie...';
+    
+    fetch('/backend/parcel_create.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert('Błąd: ' + data.error);
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          return;
+        }
+        
+        // Успешно - закрываем форму и обновляем список
+        e.target.reset();
+        closeOverlay(createOverlay);
+        
+        // Показываем сообщение об успехе
+        const successMsg = document.createElement('div');
+        successMsg.className = 'modal-overlay';
+        successMsg.innerHTML = `
+          <div class="modal-card worker-modal">
+            <button class="close-btn" type="button" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+            <div class="success-message">
+              <div class="success-icon">✓</div>
+              <h3>Przesyłka utworzona</h3>
+              <p>Numer przesyłki: <strong>${data.parcel_number}</strong></p>
+              <button class="worker-btn full" type="button" onclick="this.closest('.modal-overlay').remove()">OK</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(successMsg);
+        
+        // Обновляем список посылок
+        loadShipments();
+      })
+      .catch(error => {
+        console.error('Błąd:', error);
+        alert('Błąd połączenia z serwerem');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      });
   });
 
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
@@ -319,13 +453,14 @@ $user = $_SESSION['user'];
         closeOverlay(target);
         // Обновляем список после закрытия окна успеха
         if(target.id === 'successOverlay'){
-          renderList();
+          loadShipments();
+          selectedId = '';
         }
       }
     });
   });
 
-  renderList();
+  // renderList() вызывается после загрузки данных из API в функции loadShipments()
 </script>
 </body>
 </html>
